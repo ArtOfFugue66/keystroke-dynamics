@@ -9,5 +9,5 @@
 					+ Easier to store pairs since there is one pair / file  
 		 			- Lower performance when making the batches since there will be many calls to file reading function  
 		 			- Lots of resulting files
-	- [ ] Option 2: Concatenate all pairs of a chunk (positive & negative ones separately) into one DataFrame & write it to HDF5 file
+	- [ ] Option 2: Concatenate all pairs of a chunk (positive & negative ones separately) into one DataFrame & write it to HDF5 file  
 					+ Less resulting files (for a dataset of 4,000 files: 40 chunks, 2 dfs (positive & negative) / chunk => 80 HDF5 files)  
