@@ -35,7 +35,7 @@ def make_pairs(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
         sequence_pair["TARGET_DISTANCE"] = target
         df_pairs_list.append(sequence_pair)
 
-    # print(len(df_pairs_list[0].columns))
+
     return df_pairs_list
 
 

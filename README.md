@@ -3,7 +3,7 @@
 - To-be sub-repository of Master's Thesis project, 'TypeFace'
 
 ### TODO
-- [ ] Refactor tests in `pairs/tests/test_pairing.py` & `pairs/pairing.py:make_pairs()` until all tests pass  
+- [x] Refactor tests in `pairs/tests/test_pairing.py` & `pairs/pairing.py:make_pairs()` until all tests pass  
 - [ ] Analyze & decide on a method to store the keystroke sequence pairs created on disk  
 	- [ ] Option 1: Create 1 file for each pair (either .csv or .pickle)  
 					+ Easier to store pairs since there is one pair / file  
