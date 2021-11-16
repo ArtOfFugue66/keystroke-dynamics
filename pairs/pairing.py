@@ -21,7 +21,6 @@ def make_pairs(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
                              (True -> genuine pairs; False -> impostor pairs)
     :return: List of genuine/impostor pairs, as joined DataFrames.
     """
-    KeystrokePair = namedtuple('KeystrokePair', 'seq1 seq2 target')
     df_pairs_list = []
 
     if pair_type_flag is True:  # Genuine pairs
@@ -31,13 +30,11 @@ def make_pairs(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
         df_tuples = list(itertools.product(sequences_user_1, sequences_user_2))
         target = np.float64(pairs.conf.MARGIN)  # target distance is 'alpha' for impostor pair
 
-    for (seq1, seq2) in df_tuples:
-        if 'PARTICIPANT_ID' in seq1.columns and 'TEST_SECTION_ID' in seq1.columns:
-            seq1.drop(['PARTICIPANT_ID', 'TEST_SECTION_ID'], axis='columns', inplace=True)
-        if 'PARTICIPANT_ID' in seq2.columns and 'TEST_SECTION_ID' in seq2.columns:
-            seq2.drop(['PARTICIPANT_ID', 'TEST_SECTION_ID'], axis='columns', inplace=True)
+    for seq1, seq2 in df_tuples:
+        sequence_pair = seq1.join(seq2, lsuffix='_1', rsuffix='_2')
+        sequence_pair["TARGET_DISTANCE"] = target
+        df_pairs_list.append(sequence_pair)
 
-        df_pairs_list.append(KeystrokePair(seq1, seq2, target))
 
     return df_pairs_list
 
@@ -73,9 +70,10 @@ def read_and_make_pairs(filenames, chunk_size):
         yield chunk_genuine_pairs, chunk_impostor_pairs
 
 
-def make_pair_batches(genuine_pairs: List[(pd.DataFrame, pd.DataFrame, np.float64)],
-                      impostor_pairs: List[(pd.DataFrame, pd.DataFrame, np.float64)]) -> List[(pd.DataFrame, pd.DataFrame, np.float64)]:
+def make_pair_batches(genuine_pairs: List[pd.DataFrame],
+                      impostor_pairs: List[pd.DataFrame]) -> List[List[pd.DataFrame]]:
     """
+    If you're watching this, fuck you.
     :param genuine_pairs:
     :param impostor_pairs:
     :return:
