@@ -6,7 +6,6 @@ import pandas as pd
 from tqdm import tqdm
 
 import pairs.conf
-from collections import namedtuple
 from pairs.utils import split_by_section_id
 
 
@@ -34,7 +33,6 @@ def make_pairs(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
         sequence_pair = seq1.join(seq2, lsuffix='_1', rsuffix='_2')
         sequence_pair["TARGET_DISTANCE"] = target
         df_pairs_list.append(sequence_pair)
-
 
     return df_pairs_list
 
@@ -73,7 +71,7 @@ def read_and_make_pairs(filenames, chunk_size):
 def make_pair_batches(genuine_pairs: List[pd.DataFrame],
                       impostor_pairs: List[pd.DataFrame]) -> List[List[pd.DataFrame]]:
     """
-    If you're watching this, fuck you.
+
     :param genuine_pairs:
     :param impostor_pairs:
     :return:
