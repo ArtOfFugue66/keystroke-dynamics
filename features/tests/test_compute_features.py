@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
 
 # from features.compute_features import compute_hold_latency, compute_interkey_latency, compute_press_latency, compute_release_latency, compute_test_section_features
-from features.compute_features import *
+from features.main import *
 
 
 class TestComputeIndividualFeatures(unittest.TestCase):

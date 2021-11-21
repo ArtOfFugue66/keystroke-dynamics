@@ -134,7 +134,7 @@ def process_write_features(filename_chunk: List[str], sequence_length: int):
         all_user_sequences.to_csv(file_to_write, sep='\t', encoding='ISO-8859-1', line_terminator='\n', index=False)
 
 
-def main():
+def compute_features_dataset():
     """
     This function will run if this Python file is run directly.
     It reads files from the raw dataset into Pandas DataFrames in a chunk-by-chunk fashion,
@@ -174,4 +174,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    compute_features_dataset()

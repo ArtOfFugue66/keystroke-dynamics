@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from features.compute_features import preprocess_df, pad_or_trim_df
+from features.main import preprocess_df, pad_or_trim_df
 
 
 class TestDataFrameOperations(unittest.TestCase):
