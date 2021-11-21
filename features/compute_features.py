@@ -135,6 +135,12 @@ def process_write_features(filename_chunk: List[str], sequence_length: int):
 
 
 def main():
+    """
+    This function will run if this Python file is run directly.
+    It reads files from the raw dataset into Pandas DataFrames in a chunk-by-chunk fashion,
+    computes the timing features for all users & writes the resulting DataFrames to a new folder.
+    :return: None
+    """
     from utils import list_to_chunks_by_size
     import os
     from tqdm import tqdm

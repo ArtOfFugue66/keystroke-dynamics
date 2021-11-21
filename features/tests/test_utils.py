@@ -1,5 +1,5 @@
 import unittest
-from features.utils import list_to_chunks_by_size, list_to_chunks_by_count
+from utils import list_to_chunks_by_size, list_to_chunks_by_count
 
 
 class TestUtilityFunctions(unittest.TestCase):
