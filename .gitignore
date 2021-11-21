@@ -6,3 +6,6 @@ __pycache__/
 
 # Keystroke data capture stuff (will be removed later)
 keystroke-capture/
+
+# Profiler files
+*.pclprof
