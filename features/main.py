@@ -3,7 +3,8 @@ import numpy as np
 from typing import List, Dict
 import warnings
 
-from features import conf
+import conf.features
+import conf
 from utils.features import read_files_from_original_dataset
 
 warnings.filterwarnings('ignore')
@@ -126,7 +127,7 @@ def process_write_features(filename_chunk: List[str], sequence_length: int):
     chunk_of_dataframes = read_files_from_original_dataset(filename_chunk)
     chunk_of_dataframes_with_features = process_dataset_chunk(chunk_of_dataframes, sequence_length)
 
-    features_output_dir = f"{conf.OUTPUT_DIR}"
+    features_output_dir = f"{conf.features.OUTPUT_DIR}"
 
     for participant_id, all_user_sequences in chunk_of_dataframes_with_features.items():
         file_to_write = open(f"{features_output_dir}/{participant_id}_features.txt", "w+")
@@ -148,19 +149,19 @@ def compute_features_dataset():
     import time
     from utils.general import list_to_chunks_by_size
 
-    os.chdir(conf.SMALL_DATASET_DIR)
+    os.chdir(conf.features.SMALL_DATASET_DIR)
     dataset_filenames = os.listdir(".")
 
-    all_dataset_chunks = list(list_to_chunks_by_size(dataset_filenames, conf.CHUNK_SIZE))  # 40 chunks of size 100
+    all_dataset_chunks = list(list_to_chunks_by_size(dataset_filenames, conf.features.CHUNK_SIZE))  # 40 chunks of size 100
 
     start_time = time.time()  # ----------- Capture timestamp before CPU-intensive code ----------- #
 
     for outer_chunk_index, outer_chunk in tqdm(enumerate(all_dataset_chunks), total=len(all_dataset_chunks), desc="[INFO] Processing dataset chunks"):  # 40 chunks of size 100
-        thread_chunks = list(list_to_chunks_by_size(outer_chunk, conf.THREAD_CHUNK_SIZE))  # 10 chunks of size 10
+        thread_chunks = list(list_to_chunks_by_size(outer_chunk, conf.features.THREAD_CHUNK_SIZE))  # 10 chunks of size 10
         process_list = []
         for inner_chunk_index, inner_chunk in enumerate(thread_chunks):  # For each 10 files
             # Create a process that handles the file,
-            process = Process(target=process_write_features, args=(inner_chunk, conf.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
+            process = Process(target=process_write_features, args=(inner_chunk, conf.features.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
             # append in to the process list
             process_list.append(process)
             # and start it

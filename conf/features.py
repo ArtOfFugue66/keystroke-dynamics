@@ -1,13 +1,8 @@
 BASE_DATA_DIR = "C:/WORK/MASTER/DISERTATIE/Datasets"
 SMALL_DATASET_DIR = f"{BASE_DATA_DIR}/136m-keystrokes-small"
 WHOLE_DATASET_DIR = f"{BASE_DATA_DIR}/136m-keystrokes-full/Keystrokes/files"
-
 OUTPUT_DIR = f"{BASE_DATA_DIR}/features"
-
-# ----------- #
-
 SEQUENCE_LENGTH = 70
 NO_THREADS = 10
-
 CHUNK_SIZE = 100
 THREAD_CHUNK_SIZE = int(CHUNK_SIZE / 10)
