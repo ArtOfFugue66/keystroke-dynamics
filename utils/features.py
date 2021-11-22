@@ -1,10 +1,11 @@
 import csv
-import numpy as np
-import pandas as pd
 from typing import List
 
+import numpy as np
+import pandas as pd
 
-def read_file_list_from_dataset(filenames: List[str]) -> List[pd.DataFrame]:
+
+def read_files_from_original_dataset(filenames: List[str]) -> List[pd.DataFrame]:
     file_name = ''
     data_frames = []
     try:

@@ -4,7 +4,7 @@ from typing import List, Dict
 import warnings
 
 from features import conf
-from features.utils import read_file_list_from_dataset
+from utils.features import read_files_from_original_dataset
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
@@ -123,7 +123,7 @@ def process_dataset_chunk(user_dfs: List[pd.DataFrame], sequence_length: int) ->
 
 
 def process_write_features(filename_chunk: List[str], sequence_length: int):
-    chunk_of_dataframes = read_file_list_from_dataset(filename_chunk)
+    chunk_of_dataframes = read_files_from_original_dataset(filename_chunk)
     chunk_of_dataframes_with_features = process_dataset_chunk(chunk_of_dataframes, sequence_length)
 
     features_output_dir = f"{conf.OUTPUT_DIR}"
@@ -141,11 +141,12 @@ def compute_features_dataset():
     computes the timing features for all users & writes the resulting DataFrames to a new folder.
     :return: None
     """
-    from utils import list_to_chunks_by_size
+
     import os
     from tqdm import tqdm
     from multiprocessing import Process
     import time
+    from utils.general import list_to_chunks_by_size
 
     os.chdir(conf.SMALL_DATASET_DIR)
     dataset_filenames = os.listdir(".")
