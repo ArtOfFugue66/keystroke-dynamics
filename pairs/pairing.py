@@ -1,18 +1,20 @@
 import itertools
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-import pairs.conf
-from pairs.utils import split_by_section_id
+import conf
+from utils.pairs import read_features_from_dataset
+from utils.general import list_to_chunks_by_size
 
 
-def make_pairs(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
-               sequences_user_2: List[pd.DataFrame] = None) -> List:
+def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
+                        sequences_user_2: List[pd.DataFrame] = None) -> List:
     """
-    TODO: Fcn description
+    Creates pairs using the sequences of either one or two users.
+
     :param sequences_user_1: List of sequences belonging to 1st user.
     :param sequences_user_2: List of sequences belonging to 2nd user
                              (same user in the case of genuine pairs).
@@ -27,7 +29,7 @@ def make_pairs(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
         target = np.float64(0)
     else:  # Impostor pairs
         df_tuples = list(itertools.product(sequences_user_1, sequences_user_2))
-        target = np.float64(pairs.conf.MARGIN)  # target distance is 'alpha' for impostor pair
+        target = np.float64(conf.pairs.MARGIN)  # target distance is 'alpha' for impostor pair
 
     for seq1, seq2 in df_tuples:
         sequence_pair = seq1.join(seq2, lsuffix='_1', rsuffix='_2')
@@ -37,56 +39,78 @@ def make_pairs(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
     return df_pairs_list
 
 
-def read_and_make_pairs(filenames, chunk_size):
-    from features.utils import list_to_chunks_by_size
-    from features import utils
+def make_pairs_from_features_dfs(dfs: List[pd.DataFrame], index_of_chunk: int) \
+        -> Tuple[List[pd.DataFrame], List[pd.DataFrame]]:
+    """
+    Generator function:
+    Reads files from features dataset chunk-by-chunk &
+    makes genuine pairs & impostor pairs for each chunk.
+    :param dfs: Pandas DataFrames that are to be used for pair creation.
+    :param index_of_chunk: Index of the dataset chunk being processed in the function call.
+    :return: Tuple (genuine pairs, impostor pairs)
+    """
+    from utils.general import split_by_section_id
 
-    filename_chunks = list_to_chunks_by_size(filenames, chunk_size)
+    chunk_genuine_pairs = []
+    chunk_impostor_pairs = []
 
-    for chunk_index, chunk in enumerate(filename_chunks):  # For current chunk of filenames,
-        chunk_genuine_pairs = []
-        chunk_impostor_pairs = []
+    try:
+        for user_df in dfs:
+            user_sequences = split_by_section_id(user_df)  # split it into sequences,
+            chunk_genuine_pairs.extend(
+                make_pairs_for_user(True, user_sequences))  # add the user's genuine pairs to this chunk's genuine pairs list.
 
-        filenames, chunk_dfs = utils.read_file_list_from_dataset(chunk)  # read DataFrame for each user,
-        try:
-            for filename, user_df in tqdm(zip(filenames, chunk_dfs), total=len(chunk),
-                                          desc=f"Making pairs for dataset chunk {chunk_index}"):
-                user_sequences = split_by_section_id(user_df)  # split it into sequences,
-                chunk_genuine_pairs.extend(make_pairs(True, user_sequences))
+            impostor_list = [x for x in dfs if
+                             not x.equals(user_df)]  # Iterate through all users in the chunk except the current one;
 
-                impostor_list = [x for x in chunk_dfs if
-                                 not x.equals(user_df)]  # Iterate through all users in the chunk except the current one
+            for impostor_df in impostor_list:  # For each "impostor",
+                impostor_sequences = split_by_section_id(impostor_df)  # split his DataFrame into sequences,
+                impostor_pairs = make_pairs_for_user(False, user_sequences,
+                                                     impostor_sequences)  # make impostor pairs using this impostor's sequences
+                chunk_impostor_pairs.extend(impostor_pairs)  # and add them to the list.
+    except Exception as e:
+        print(f"\n[ERROR] Skipping user {user_df['PARTICIPANT_ID'][0]}'s file: {e}")
+        raise ValueError  # TODO: Remove this?
 
-                for impostor_df in impostor_list:
-                    impostor_sequences = split_by_section_id(impostor_df)
-                    impostor_pairs = make_pairs(False, user_sequences, impostor_sequences)
-                    chunk_impostor_pairs.extend(impostor_pairs)
-        except Exception as e:
-            print(f"\n[ERROR] Skipping file {filename}: {e}")
-            raise ValueError
-
-        yield chunk_genuine_pairs, chunk_impostor_pairs
+    return chunk_genuine_pairs, chunk_impostor_pairs
 
 
 def make_pair_batches(genuine_pairs: List[pd.DataFrame],
-                      impostor_pairs: List[pd.DataFrame]) -> List[List[pd.DataFrame]]:
+                      impostor_pairs: List[pd.DataFrame],
+                      batch_size: int = None,
+                      shuffle_batches_flag: bool = True) -> List[List[pd.DataFrame]]:
+    """
+    Groups a number of genuine pairs & impostor pairs into batches.
+    Each batch contains half genuine pairs, half impostor pairs.
+
+    :param shuffle_batches_flag: Specify whether to shuffle batches; Needed for unit testing.
+    :param genuine_pairs: A list of Pandas DataFrames representing positive keystroke sequence
+    pairs (i.e., belonging to the same user).
+    :param impostor_pairs: A list of Pandas DataFrames representing negative keystroke sequence
+    pairs (i.e., belonging to different users).
+    :param batch_size: The size of each batch that should be created.
+    :return: A list containing all batches created using 'genuine_pairs' and 'impostor_pairs' param values.
     """
 
-    :param genuine_pairs:
-    :param impostor_pairs:
-    :return:
-    """
-    from features.utils import list_to_chunks_by_size
     batches = []
+    if not batch_size:
+        batch_size = conf.pairs.BATCH_SIZE
 
-    batch_size = pairs.conf.BATCH_SIZE
+    # Split genuine pairs & impostor pairs lists into halves
+    genuine_half_batches = list_to_chunks_by_size(genuine_pairs, batch_size // 2)
+    impostor_half_batches = list_to_chunks_by_size(impostor_pairs, batch_size // 2)
 
-    # Make half-batches from the current dataset chunk
-    genuine_half_batches = list_to_chunks_by_size(genuine_pairs, batch_size / 2)
-    impostor_half_batches = list_to_chunks_by_size(impostor_pairs, batch_size / 2)
+    # Iterate through both lists of batch halves at once
+    for genuine_half, impostor_half in zip(genuine_half_batches, impostor_half_batches):
+        # Concatenate the two halves -> 'genuine_half' becomes a batch
+        genuine_half.extend(impostor_half)
 
-    for genuine_half, impostor_half in zip(genuine_half_batches, impostor_half_batches, strict=True):
-        batch = genuine_half.append(impostor_half)
-        batches.append(batch)  # TODO: maybe use 'extend' here
+        # Randomly shuffle the batch before appending it to the list
+        # NOTE: This is to avoid batches always starting with genuine pairs
+        if shuffle_batches_flag:
+            np.random.shuffle(genuine_half)
+
+        # Add the batch to the list
+        batches.append(genuine_half)
 
     return batches
