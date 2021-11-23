@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from features.compute_features import preprocess_df, pad_or_trim_df
+from features.main import preprocess_df, pad_or_trim_df
 
 
 class TestDataFrameOperations(unittest.TestCase):
@@ -69,7 +69,7 @@ class TestDataFrameOperations(unittest.TestCase):
         )  # Has same TEST_SECTION_ID throughout, since it represents a sequence sub-frame
         sequence_length = 10
         expected = pd.DataFrame(
-            columns=['PARTICIPANT_ID', 'TEST_SECTION_ID', 'HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY','RELEASE_LATENCY'],
+            columns=['PARTICIPANT_ID', 'TEST_SECTION_ID', 'HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
             data=[[10001, 1, 0.05100, 0.00000, 0.00000, 0.00000],
                   [10001, 1, 0.19200, 0.28000, 0.33100, 0.00000],
                   [10001, 1, 0.00000, 0.06400, 0.12800, 0.00100],

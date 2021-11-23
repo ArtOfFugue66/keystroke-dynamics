@@ -3,8 +3,9 @@ import numpy as np
 from typing import List, Dict
 import warnings
 
-from features import conf
-from features.utils import read_file_list_from_dataset
+import conf.features
+import conf
+from utils.features import read_files_from_original_dataset
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
@@ -123,10 +124,10 @@ def process_dataset_chunk(user_dfs: List[pd.DataFrame], sequence_length: int) ->
 
 
 def process_write_features(filename_chunk: List[str], sequence_length: int):
-    chunk_of_dataframes = read_file_list_from_dataset(filename_chunk)
+    chunk_of_dataframes = read_files_from_original_dataset(filename_chunk)
     chunk_of_dataframes_with_features = process_dataset_chunk(chunk_of_dataframes, sequence_length)
 
-    features_output_dir = f"{conf.OUTPUT_DIR}"
+    features_output_dir = f"{conf.features.OUTPUT_DIR}"
 
     for participant_id, all_user_sequences in chunk_of_dataframes_with_features.items():
         file_to_write = open(f"{features_output_dir}/{participant_id}_features.txt", "w+")
@@ -134,26 +135,33 @@ def process_write_features(filename_chunk: List[str], sequence_length: int):
         all_user_sequences.to_csv(file_to_write, sep='\t', encoding='ISO-8859-1', line_terminator='\n', index=False)
 
 
-def main():
-    from utils import list_to_chunks_by_size
+def compute_features_dataset():
+    """
+    This function will run if this Python file is run directly.
+    It reads files from the raw dataset into Pandas DataFrames in a chunk-by-chunk fashion,
+    computes the timing features for all users & writes the resulting DataFrames to a new folder.
+    :return: None
+    """
+
     import os
     from tqdm import tqdm
     from multiprocessing import Process
     import time
+    from utils.general import list_to_chunks_by_size
 
-    os.chdir(conf.SMALL_DATASET_DIR)
+    os.chdir(conf.features.SMALL_DATASET_DIR)
     dataset_filenames = os.listdir(".")
 
-    all_dataset_chunks = list(list_to_chunks_by_size(dataset_filenames, conf.CHUNK_SIZE))  # 40 chunks of size 100
+    all_dataset_chunks = list(list_to_chunks_by_size(dataset_filenames, conf.features.CHUNK_SIZE))  # 40 chunks of size 100
 
     start_time = time.time()  # ----------- Capture timestamp before CPU-intensive code ----------- #
 
     for outer_chunk_index, outer_chunk in tqdm(enumerate(all_dataset_chunks), total=len(all_dataset_chunks), desc="[INFO] Processing dataset chunks"):  # 40 chunks of size 100
-        thread_chunks = list(list_to_chunks_by_size(outer_chunk, conf.THREAD_CHUNK_SIZE))  # 10 chunks of size 10
+        thread_chunks = list(list_to_chunks_by_size(outer_chunk, conf.features.THREAD_CHUNK_SIZE))  # 10 chunks of size 10
         process_list = []
         for inner_chunk_index, inner_chunk in enumerate(thread_chunks):  # For each 10 files
-            # Create a process that handles the file,
-            process = Process(target=process_write_features, args=(inner_chunk, conf.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
+            # Create a process that handles the files,
+            process = Process(target=process_write_features, args=(inner_chunk, conf.features.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
             # append in to the process list
             process_list.append(process)
             # and start it
@@ -168,4 +176,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    compute_features_dataset()

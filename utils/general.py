@@ -1,38 +1,35 @@
 from __future__ import annotations
 
-import pandas as pd
-import numpy as np
 from typing import List
-import csv
+
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 
-def read_file_list_from_dataset(filenames: List[str]) -> pd.DataFrame | List[pd.DataFrame]:
+def list_to_chunks_by_size(file_list: List, chunk_size: int) -> List:
     """
-    NOTE: Using two cases to avoid consecutive calls to this function if a list of files has to be read
-    :param filenames:
+    Generator function; Internal state of function persists across calls.
+    Split 'file_list' list into multiple sub-lists of a given size (chunks).
+    @param: file_list: list to be split
+    @param: chunk_size: size of created sub-lists
+    """
+    dataset_length = len(file_list)
+
+    for i in range(0, dataset_length, chunk_size):
+        yield file_list[i: i + chunk_size]
+
+
+def list_to_chunks_by_count(file_list: List, no_chunks: int) -> List[List]:
+    """
+    Generator function; Internal state of function persists across calls.
+    Split 'file_list' list into 'no_chunks' chunks of same size.
+    :param file_list: list to be split
+    :param no_chunks: number of sub-lists to split into
     :return:
     """
-    dataFrames = []
-    try:
-        for filename in tqdm(filenames, total=len(filenames), desc="Reading files from dataset"):
-            dataFrames.append(
-                pd.read_csv(filename,
-                            delimiter='\t',
-                            encoding="ISO-8859-1",
-                            engine="python",
-                            quoting=csv.QUOTE_NONE,
-                            dtype={'PARTICIPANT_ID': np.int32, 'TEST_SECTION_ID': np.int32,
-                                   'HOLD_LATENCY': np.float64, 'INTERKEY_LATENCY': np.float64,
-                                   'PRESS_LATENCY': np.float64, 'RELEASE_LATENCY': np.float64})
-            )
-    except Exception as e:
-        print(f"\n[ERROR] Skipping file {filename}: {e}")
-
-    if len(dataFrames) > 1:
-        return filenames, dataFrames
-    elif len(dataFrames) == 1:  # If a single file has been read
-        return filenames[0], dataFrames[0]
+    for chunk in np.array_split(file_list, no_chunks):
+        yield list(chunk)  # Converting to list for ease of use
 
 
 def split_by_section_id(dfs: List[pd.DataFrame] | pd.DataFrame) -> List[pd.DataFrame]:
