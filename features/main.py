@@ -160,7 +160,7 @@ def compute_features_dataset():
         thread_chunks = list(list_to_chunks_by_size(outer_chunk, conf.features.THREAD_CHUNK_SIZE))  # 10 chunks of size 10
         process_list = []
         for inner_chunk_index, inner_chunk in enumerate(thread_chunks):  # For each 10 files
-            # Create a process that handles the file,
+            # Create a process that handles the files,
             process = Process(target=process_write_features, args=(inner_chunk, conf.features.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
             # append in to the process list
             process_list.append(process)
