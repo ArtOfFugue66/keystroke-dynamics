@@ -8,15 +8,15 @@ import pandas as pd
 from tqdm import tqdm
 
 
-def pairs_to_sequences_and_target(pair_tuples: List[Tuple[pd.DataFrame, pd.DataFrame, np.float64]]) -> Tuple[List[pd.DataFrame], List[pd.DataFrame], List[np.float64]]:
+def pairs_to_sequences_and_target(pair_dfs: List[Tuple[pd.DataFrame, pd.DataFrame, np.float64]]) -> Tuple[List[pd.DataFrame], List[pd.DataFrame], List[np.float64]]:
     """
     TODO: Function description
-    :param pair_tuples:
+    :param pair_dfs:
     :return:
     """
     first_sequences, second_sequences, target_distances = [], [], []
 
-    for pair in pair_tuples:
+    for pair in pair_dfs:
         first_sequences.append(pair[0])
         second_sequences.append(pair[1])
         target_distances.append(pair[2])
@@ -32,7 +32,7 @@ def read_features_from_dataset(filenames: List[str]) -> pd.DataFrame | List[pd.D
     """
     dataFrames = []
     try:
-        for filename in tqdm(filenames, total=len(filenames), desc="Reading files from dataset"):
+        for filename in filenames:
             dataFrames.append(
                 pd.read_csv(filename,
                             delimiter='\t',
