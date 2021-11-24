@@ -27,4 +27,6 @@
     - [x] Option 2: Concatenate all pairs of a chunk (positive & negative ones separately) into one DataFrame & write it
       to HDF5 file  
       + Less resulting files (as many files as there are threads processing chunks of the features dataset)
-- [ ] Set aside some of of the pairs for validation & some for testing
+- [ ] Write `siamese` module: Should contain everything related to the Siamese RNN necessary for the user authentication
+  - [ ] Use [Image similarity estimation using a Siamese Network with a contrastive loss](https://keras.io/examples/vision/siamese_contrastive/) tutorial as reference
+- [ ] Build main module: Should read raw data, compute features, make pairs, do training-validation-testing split, call training method on Siamese RNN model
