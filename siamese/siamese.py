@@ -33,12 +33,15 @@ def make_siamese(batch_size, input_shape, embedding_dimensions=128):
 
     # Compile the model with the Contrastive loss
     # TODO: Add optimizer parameter & tweak the optimizer-related parameters
-    model.compile(loss=tfa.losses.ContrastiveLoss, metrics=['accuracy'])
-
-    # TODO: Generate the name for the Siamese model before returning it,
-    #       based on values such as embedding dimensions etc. (see Sentdex videos)
-    # TODO: Assign the generated name to the model
-    # Generate a unique name for the model using relevant parameters; The purpose of this is to
+    model_loss = tfa.losses.ContrastiveLoss
+    model_metrics = ['accuracy']
+    # Use a unique name for the model using relevant parameters; The purpose of this is to
     # make performance comparisons of different model configurations easier
-    model_name = f"{conf.SIAMESE_NAME_PREFIX}_{batch_size}_{embedding_dimensions}"
+    model_name = f"{conf.SIAMESE_NAME_PREFIX}_" \
+                 f"{'TFAddonsCL' if type(model_loss) == tfa.losses.ContrastiveLoss else 'SelfCL'}_" \
+                 f"{model_metrics}_" \
+                 f"{batch_size}_" \
+                 f"{embedding_dimensions}"
+    model.compile(loss=model_loss, metrics=model_metrics, name=model_name)
+
     return model
