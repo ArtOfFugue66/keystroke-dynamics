@@ -1,16 +1,39 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
 
+def unravel_batches(batch_list: List[Tuple[pd.DataFrame, pd.DataFrame, np.float64]]) \
+        -> Tuple[List[pd.DataFrame], List[pd.DataFrame], List[np.float64]]:
+    """
+    Retrieve elements of the pair tuples and place them into individual lists.
+
+    :param batch_list: List of all the batches to be unraveled.
+    :return: Tuple containing (first sequences, second sequences, target distances).
+    """
+    first_sequence_features = []
+    second_sequence_features = []
+    target_distances = []
+
+    for batch_index, batch in tqdm(enumerate(batch_list), total=len(batch_list),
+                                   desc=f"[BATCHES] Unraveling sequences from batches"):
+        for seq1, seq2, target_distance in batch:
+            first_sequence_features.append(seq1)
+            second_sequence_features.append(seq2)
+            target_distances.append(target_distance)
+
+    return first_sequence_features, second_sequence_features, target_distances
+
+
 def list_to_chunks_by_size(file_list: List, chunk_size: int) -> List:
     """
     Generator function; Internal state of function persists across calls.
     Split 'file_list' list into multiple sub-lists of a given size (chunks).
+
     @param: file_list: list to be split
     @param: chunk_size: size of created sub-lists
     """
