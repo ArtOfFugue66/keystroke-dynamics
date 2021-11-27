@@ -8,7 +8,8 @@ import pandas as pd
 from tqdm import tqdm
 
 
-def pairs_to_sequences_and_target(pair_dfs: List[Tuple[pd.DataFrame, pd.DataFrame, np.float64]]) -> Tuple[List[pd.DataFrame], List[pd.DataFrame], List[np.float64]]:
+def pairs_to_sequences_and_target(pair_dfs: List[Tuple[pd.DataFrame, pd.DataFrame, np.float64]]) -> Tuple[
+    List[pd.DataFrame], List[pd.DataFrame], List[np.float64]]:
     """
     TODO: Function description
     :param pair_dfs:
@@ -24,17 +25,22 @@ def pairs_to_sequences_and_target(pair_dfs: List[Tuple[pd.DataFrame, pd.DataFram
     return first_sequences, second_sequences, target_distances
 
 
-def read_features_from_dataset(filenames: List[str]) -> pd.DataFrame | List[pd.DataFrame]:
+def read_features_from_dataset(filenames: List[str], index_of_chunk: int) -> pd.DataFrame | List[pd.DataFrame]:
     """
     Reads files from the features dataset into Pandas DataFrames.
-    :param filenames: list of filenames to be read from the features dataset.
+
+    :param filenames: List of filenames to be read from the features dataset.
+    :param index_of_chunk: Index of the dataset chunk being processed in
+    the function call.
     :return: Either a single DataFrame or a list of DataFrames, depending on length of 'filenames' param.
     """
+    import conf.features
+
     dataFrames = []
     try:
-        for filename in filenames:
+        for filename in tqdm(filenames, total=len(filenames), desc=f"[DATA] Reading features dataset for chunk #{index_of_chunk}"):
             dataFrames.append(
-                pd.read_csv(filename,
+                pd.read_csv(f"{conf.features.OUTPUT_DIR}/{filename}",
                             delimiter='\t',
                             encoding="ISO-8859-1",
                             engine="python",
