@@ -3,15 +3,14 @@ import unittest
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
-
 from pairs.pairing import make_pairs_for_user, make_pair_batches
 import conf.pairs as conf
 
 
 class TestReadDataset(unittest.TestCase):
-    def test_make_pairs_fcn_genuine_pairs(self):
+    def test_make_pairs_for_user_fcn_genuine_pairs(self):
         """
-        Test pairing.make_pairs() functionality for GENUINE pairs.
+        Test pairing.make_pairs_for_user() functionality for GENUINE pairs.
         NOTE: Expected list is 3 x 2 / 2 = 3 DataFrames long
         """
         # Arrange
@@ -36,32 +35,50 @@ class TestReadDataset(unittest.TestCase):
             )
         ]
         expected = [
-            pd.DataFrame(
-                columns=['PARTICIPANT_ID_1', 'TEST_SECTION_ID_1', 'HOLD_LATENCY_1',
-                         'INTERKEY_LATENCY_1', 'PRESS_LATENCY_1', 'RELEASE_LATENCY_1',
-                         'PARTICIPANT_ID_2', 'TEST_SECTION_ID_2', 'HOLD_LATENCY_2',
-                         'INTERKEY_LATENCY_2', 'PRESS_LATENCY_2', 'RELEASE_LATENCY_2',
-                         'TARGET_DISTANCE'],
-                data=[[10001, 1, 0.05100, 0.00000, 0.00000, 0.00000, 10001, 2, 0.05900, 0.00000, 0.00000, 0.00000, 0.0],
-                      [10001, 1, 0.19200, 0.28000, 0.33100, 0.00000, 10001, 2, 0.19500, 0.26000, 0.31300, 0.00000, 0.0]]
+            (
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY',
+                             'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05100, 0.00000, 0.00000, 0.00000],
+                          [0.19200, 0.28000, 0.33100, 0.00000]]
+                ),
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY',
+                             'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                np.float64(0)
             ),
-            pd.DataFrame(
-                columns=['PARTICIPANT_ID_1', 'TEST_SECTION_ID_1', 'HOLD_LATENCY_1',
-                         'INTERKEY_LATENCY_1', 'PRESS_LATENCY_1', 'RELEASE_LATENCY_1',
-                         'PARTICIPANT_ID_2', 'TEST_SECTION_ID_2', 'HOLD_LATENCY_2',
-                         'INTERKEY_LATENCY_2', 'PRESS_LATENCY_2', 'RELEASE_LATENCY_2',
-                         'TARGET_DISTANCE'],
-                data=[[10001, 1, 0.05100, 0.00000, 0.00000, 0.00000, 10001, 3, 0.05900, 0.00000, 0.00000, 0.00000, 0.0],
-                      [10001, 1, 0.19200, 0.28000, 0.33100, 0.00000, 10001, 3, 0.19500, 0.26000, 0.31300, 0.00000, 0.0]]
+            (
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY',
+                             'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05100, 0.00000, 0.00000, 0.00000],
+                          [0.19200, 0.28000, 0.33100, 0.00000]]
+                ),
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY',
+                             'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                np.float64(0)
             ),
-            pd.DataFrame(
-                columns=['PARTICIPANT_ID_1', 'TEST_SECTION_ID_1', 'HOLD_LATENCY_1',
-                         'INTERKEY_LATENCY_1', 'PRESS_LATENCY_1', 'RELEASE_LATENCY_1',
-                         'PARTICIPANT_ID_2', 'TEST_SECTION_ID_2', 'HOLD_LATENCY_2',
-                         'INTERKEY_LATENCY_2', 'PRESS_LATENCY_2', 'RELEASE_LATENCY_2',
-                         'TARGET_DISTANCE'],
-                data=[[10001, 2, 0.05900, 0.00000, 0.00000, 0.00000, 10001, 3, 0.05900, 0.00000, 0.00000, 0.00000, 0.0],
-                      [10001, 2, 0.19500, 0.26000, 0.31300, 0.00000, 10001, 3, 0.19500, 0.26000, 0.31300, 0.00000, 0.0]]
+            (
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY',
+                             'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY',
+                             'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                np.float64(0)
             )
         ]
         # Act
@@ -69,17 +86,21 @@ class TestReadDataset(unittest.TestCase):
                                      sequences_user_1=test_genuine_sequences,
                                      sequences_user_2=None)
         # Assert
-        self.assertEqual(len(actual), len(expected))
-        for actual_pair, expected_pair in zip(actual, expected):
-            assert_frame_equal(actual_pair, expected_pair)
+        self.assertEqual(len(actual), len(expected))  # Check that the fcn returns the correct # of DataFrames
+        for i in range(len(actual)):
+            print(actual[i])
+            assert_frame_equal(actual[i][0], expected[i][0])  # Check each DataFrame in the tuple
+            assert_frame_equal(actual[i][1],
+                               expected[i][1])  # Check that each DataFrame in the list has the correct shape & data
+            self.assertEqual(actual[i][2],
+                             expected[i][2])  # Check that each DataFrame in the list has the correct shape & data
 
-    def test_make_pairs_fcn_impostor_pairs(self):
+    def test_make_pairs_for_user_fcn_impostor_pairs(self):
         """
-        Test pairing.make_pairs() functionality for IMPOSTOR pairs.
+        Test pairing.make_pairs_for_user() functionality for IMPOSTOR pairs.
         NOTE: Expected list of pairs is 2 x (2 users - 1) x 2 = 4 DataFrames long
         """
         # Arrange
-        margin = np.float64(conf.MARGIN)
         test_sequences_1 = [
             pd.DataFrame(
                 columns=['PARTICIPANT_ID', 'TEST_SECTION_ID', 'HOLD_LATENCY',
@@ -110,49 +131,57 @@ class TestReadDataset(unittest.TestCase):
         ]
         # 2 genuine sequences & 2 impostor sequences => 4 total impostor pairs
         expected = [
-            pd.DataFrame(
-                columns=['PARTICIPANT_ID_1', 'TEST_SECTION_ID_1', 'HOLD_LATENCY_1',
-                         'INTERKEY_LATENCY_1', 'PRESS_LATENCY_1', 'RELEASE_LATENCY_1',
-                         'PARTICIPANT_ID_2', 'TEST_SECTION_ID_2', 'HOLD_LATENCY_2',
-                         'INTERKEY_LATENCY_2', 'PRESS_LATENCY_2', 'RELEASE_LATENCY_2',
-                         'TARGET_DISTANCE'],
-                data=[[10001, 1, 0.05100, 0.00000, 0.00000, 0.00000, 10003, 1, 0.05100, 0.00000, 0.00000, 0.00000,
-                       margin],
-                      [10001, 1, 0.19200, 0.28000, 0.33100, 0.00000, 10003, 1, 0.19200, 0.28000, 0.33100, 0.00000,
-                       margin]]
+            (
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05100, 0.00000, 0.00000, 0.00000],
+                          [0.19200, 0.28000, 0.33100, 0.00000]]
+                ),
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05100, 0.00000, 0.00000, 0.00000],
+                          [0.19200, 0.28000, 0.33100, 0.00000]]
+                ),
+                np.float64(conf.MARGIN)
             ),
-            pd.DataFrame(
-                columns=['PARTICIPANT_ID_1', 'TEST_SECTION_ID_1', 'HOLD_LATENCY_1',
-                         'INTERKEY_LATENCY_1', 'PRESS_LATENCY_1', 'RELEASE_LATENCY_1',
-                         'PARTICIPANT_ID_2', 'TEST_SECTION_ID_2', 'HOLD_LATENCY_2',
-                         'INTERKEY_LATENCY_2', 'PRESS_LATENCY_2', 'RELEASE_LATENCY_2',
-                         'TARGET_DISTANCE'],
-                data=[[10001, 1, 0.05100, 0.00000, 0.00000, 0.00000, 10003, 2, 0.05900, 0.00000, 0.00000, 0.00000,
-                       margin],
-                      [10001, 1, 0.19200, 0.28000, 0.33100, 0.00000, 10003, 2, 0.19500, 0.26000, 0.31300, 0.00000,
-                       margin]]
+            (
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05100, 0.00000, 0.00000, 0.00000],
+                          [0.19200, 0.28000, 0.33100, 0.00000]]
+                ),
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                np.float64(conf.MARGIN)
             ),
-            pd.DataFrame(
-                columns=['PARTICIPANT_ID_1', 'TEST_SECTION_ID_1', 'HOLD_LATENCY_1',
-                         'INTERKEY_LATENCY_1', 'PRESS_LATENCY_1', 'RELEASE_LATENCY_1',
-                         'PARTICIPANT_ID_2', 'TEST_SECTION_ID_2', 'HOLD_LATENCY_2',
-                         'INTERKEY_LATENCY_2', 'PRESS_LATENCY_2', 'RELEASE_LATENCY_2',
-                         'TARGET_DISTANCE'],
-                data=[[10001, 2, 0.05900, 0.00000, 0.00000, 0.00000, 10003, 1, 0.05100, 0.00000, 0.00000, 0.00000,
-                       margin],
-                      [10001, 2, 0.19500, 0.26000, 0.31300, 0.00000, 10003, 1, 0.19200, 0.28000, 0.33100, 0.00000,
-                       margin]]
+            (
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05100, 0.00000, 0.00000, 0.00000],
+                          [0.19200, 0.28000, 0.33100, 0.00000]]
+                ),
+                np.float64(conf.MARGIN)
             ),
-            pd.DataFrame(
-                columns=['PARTICIPANT_ID_1', 'TEST_SECTION_ID_1', 'HOLD_LATENCY_1',
-                         'INTERKEY_LATENCY_1', 'PRESS_LATENCY_1', 'RELEASE_LATENCY_1',
-                         'PARTICIPANT_ID_2', 'TEST_SECTION_ID_2', 'HOLD_LATENCY_2',
-                         'INTERKEY_LATENCY_2', 'PRESS_LATENCY_2', 'RELEASE_LATENCY_2',
-                         'TARGET_DISTANCE'],
-                data=[[10001, 2, 0.05900, 0.00000, 0.00000, 0.00000, 10003, 2, 0.05900, 0.00000, 0.00000, 0.00000,
-                       margin],
-                      [10001, 2, 0.19500, 0.26000, 0.31300, 0.00000, 10003, 2, 0.19500, 0.26000, 0.31300, 0.00000,
-                       margin]]
+            (
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                pd.DataFrame(
+                    columns=['HOLD_LATENCY', 'INTERKEY_LATENCY', 'PRESS_LATENCY', 'RELEASE_LATENCY'],
+                    data=[[0.05900, 0.00000, 0.00000, 0.00000],
+                          [0.19500, 0.26000, 0.31300, 0.00000]]
+                ),
+                np.float64(conf.MARGIN)
             )
         ]
         # Act
@@ -160,15 +189,18 @@ class TestReadDataset(unittest.TestCase):
                                      sequences_user_1=test_sequences_1,
                                      sequences_user_2=test_sequences_2)
         # Assert
-
-        self.assertEqual(len(actual), len(expected))
-        for actual_pair, expected_pair in zip(actual, expected):
-            assert_frame_equal(actual_pair, expected_pair)
+        self.assertEqual(len(actual), len(expected))  # Check that the fcn returns the correct # of DataFrames
+        for i in range(len(actual)):
+            assert_frame_equal(actual[i][0], expected[i][0])  # Check each DataFrame in the tuple
+            assert_frame_equal(actual[i][1],
+                               expected[i][1])  # Check that each DataFrame in the list has the correct shape & data
+            self.assertEqual(actual[i][2],
+                             expected[i][2])  # Check that each DataFrame in the list has the correct shape & data
 
     def test_make_batches_fcn(self):
         """
         Test pairing.make_pair_batches() functionality.
-        :return:
+        TODO: A batch should be a list of tuples.
         """
         # Arrange
         margin = np.float64(conf.MARGIN)

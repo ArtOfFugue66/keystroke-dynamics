@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 from typing import List
 
+
 import conf.pairs as conf
 from pairs.pairing import make_pairs_from_features_dfs
 
@@ -16,6 +17,7 @@ def process_write_pairs(features_chunk: List[str], index_of_chunk: int):
     :return:
     """
     from utils.pairs import read_features_from_dataset
+    import numpy as np
 
     # Read files belonging to the current chunk
     chunk_dfs = read_features_from_dataset(features_chunk)  # read DataFrame for each user,
