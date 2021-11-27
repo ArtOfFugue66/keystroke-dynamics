@@ -9,3 +9,6 @@ keystroke-capture/
 
 # Profiler files
 *.pclprof
+
+# Coverage module files
+*.coverage
