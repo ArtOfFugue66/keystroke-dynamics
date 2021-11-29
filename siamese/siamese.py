@@ -20,6 +20,9 @@ def make_siamese(batch_size, input_shape, embedding_dimensions=128):
     # "Merge" the embeddings of the two input sequences by computing their Euclidean distance
     merge_layer = Lambda(utils.euclidean_distance, name="Euclidean_distance")([xi_embedded, xj_embedded])
 
+    # TODO: Might need to use tf.reshape() here to solve the 'ValueError: Input has undefined rank.' error
+    #       thrown when calling this function.
+
     # Add another layer of normalization
     batch_norm_layer = BatchNormalization(name="Batch_Norm")(merge_layer)
 
@@ -41,7 +44,7 @@ def make_siamese(batch_size, input_shape, embedding_dimensions=128):
                  f"{'TFAddonsCL' if type(model_loss) == tfa.losses.ContrastiveLoss else 'SelfCL'}_" \
                  f"{model_metrics}_" \
                  f"{batch_size}_" \
-                 f"{embedding_dimensions}"
+                 f"{embedding_dimensions}"  # TODO: Add info on optimizer & optimizer parameters in the name
     model.compile(loss=model_loss, metrics=model_metrics, name=model_name)
 
     return model
