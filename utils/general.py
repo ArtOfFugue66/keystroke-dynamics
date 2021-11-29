@@ -7,6 +7,16 @@ import pandas as pd
 from tqdm import tqdm
 
 
+def split_list_by_percentages(list_to_split: List, *percentages) -> List[List]:
+    """
+    Take a list and split it into sub-lists by percentages (e.g., 80%-10%-10%).
+
+    :param list_to_split: List that should be split into sub-lists.
+    :param percentages: An arbitrary number of floats that specify the number of sublists & the size for each resulting sublist.
+    """
+    pass
+
+
 def unravel_batches(batch_list: List[Tuple[pd.DataFrame, pd.DataFrame, np.float64]]) \
         -> Tuple[List[pd.DataFrame], List[pd.DataFrame], List[np.float64]]:
     """
@@ -32,7 +42,7 @@ def unravel_batches(batch_list: List[Tuple[pd.DataFrame, pd.DataFrame, np.float6
 def list_to_chunks_by_size(file_list: List, chunk_size: int) -> List:
     """
     Generator function; Internal state of function persists across calls.
-    Split 'file_list' list into multiple sub-lists of a given size (chunks).
+    Split a list into multiple sub-lists (chunks) of the specified size.
 
     @param: file_list: list to be split
     @param: chunk_size: size of created sub-lists
@@ -43,22 +53,11 @@ def list_to_chunks_by_size(file_list: List, chunk_size: int) -> List:
         yield file_list[i: i + chunk_size]
 
 
-def list_to_chunks_by_count(file_list: List, no_chunks: int) -> List[List]:
-    """
-    Generator function; Internal state of function persists across calls.
-    Split 'file_list' list into 'no_chunks' chunks of same size.
-    :param file_list: list to be split
-    :param no_chunks: number of sub-lists to split into
-    :return:
-    """
-    for chunk in np.array_split(file_list, no_chunks):
-        yield list(chunk)  # Converting to list for ease of use
-
-
 def split_by_section_id(dfs: List[pd.DataFrame] | pd.DataFrame) -> List[pd.DataFrame]:
     """
     If df is a single DataFrame, split it into sub-frames by test section ID, reset index for each & return.
     If df is a list of DataFrame objects, do all these operations but return a single list containing all sub-frames.
+
     :param dfs: DataFrame containing all keystroke data for a single user
     :return: List of test section sub-frames as standalone DataFrames
     """
