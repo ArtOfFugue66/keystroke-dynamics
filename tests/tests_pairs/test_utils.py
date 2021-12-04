@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from utils.general import split_by_section_id
+from common.utils import split_by_section_id
 
 
 class TestReadDataset(unittest.TestCase):

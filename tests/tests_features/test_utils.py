@@ -3,7 +3,7 @@ import unittest
 
 class TestUtilityFunctions(unittest.TestCase):
     def test_list_to_chunks_by_size_fcn(self):
-        from utils.general import list_to_chunks_by_size
+        from common.utils import list_to_chunks_by_size
 
         # Arrange
         test_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

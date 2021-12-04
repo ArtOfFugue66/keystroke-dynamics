@@ -1,28 +1,64 @@
+from __future__ import annotations
+import csv
 import itertools
 from typing import List, Tuple
-
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-import conf.pairs as conf
-from utils.pairs import read_features_from_dataset
-from utils.general import list_to_chunks_by_size
+from pairs import conf
 
+
+def read_features_from_dataset(filenames: List[str], index_of_chunk: int) -> pd.DataFrame | List[pd.DataFrame]:
+    """
+    Reads files from the dataset of features into Pandas DataFrames.
+
+    :param filenames: List of filenames to be read from the features dataset.
+    :param index_of_chunk: Index of the dataset chunk being processed in
+    the function call.
+    :return: Either a single DataFrame or a list of DataFrames, depending on length of 'filenames' param.
+    """
+    import features.conf
+
+    dataFrames = []
+    try:
+        for filename in tqdm(filenames, total=len(filenames),
+                             desc=f"[DATA] Reading features dataset for chunk #{index_of_chunk}"):
+            dataFrames.append(
+                pd.read_csv(f"{features.conf.OUTPUT_DIR}/{filename}",
+                            delimiter='\t',
+                            encoding="ISO-8859-1",
+                            engine="python",
+                            quoting=csv.QUOTE_NONE,
+                            dtype={'PARTICIPANT_ID': np.int32, 'TEST_SECTION_ID': np.int32,
+                                   'HOLD_LATENCY': np.float64, 'INTERKEY_LATENCY': np.float64,
+                                   'PRESS_LATENCY': np.float64, 'RELEASE_LATENCY': np.float64})
+            )
+    except Exception as e:
+        print(f"\n[ERROR] Skipping file {filename}: {e}")
+
+    # NOTE: Using two cases to avoid consecutive calls to this function if a list of files has to be read.
+    if len(dataFrames) > 1:
+        return dataFrames
+    elif len(dataFrames) == 1:  # If a single file has been read
+        return dataFrames[0]
 
 def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
                         sequences_user_2: List[pd.DataFrame] = None) -> List:
     """
     Make genuine or impostor pairs for a certain user using
-    his sequences and, optionally, those of another user.
-    :param sequences_user_1: List of sequences belonging to 1st user.
+    his sequences, and for impostor pairs, those of another user.
+
+    param sequences_user_1: List of sequences belonging to 1st user
+    :param sequences_user_1:
     :param sequences_user_2: List of sequences belonging to 2nd user
-                             (same user in the case of genuine pairs).
+                             (same user in the case of genuine pairs)
     :param pair_type_flag:   Switch that determines the type of pairs to be created
                              (True -> genuine pairs; False -> impostor pairs)
-    :return: List of genuine/impostor pairs, as joined DataFrames.
+    :return: List of genuine/impostor pairs, as joined DataFrames
     """
     from collections import namedtuple
+    import tensorflow as tf
 
     KeystrokePair = namedtuple('KeystrokePair', 'seq1 seq2 target')
     df_pairs_list = []
@@ -40,23 +76,28 @@ def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFram
         # if 'PARTICIPANT_ID' in seq2.columns and 'TEST_SECTION_ID' in seq2.columns:
         seq2 = seq2.drop(['PARTICIPANT_ID', 'TEST_SECTION_ID'], axis=1)
 
+        # TODO: Convert DataFrames to Tensors; If there's too much code involved, make a separate fcn
+        # seq1_tensor = tf.convert_to_tensor(seq1, tf.float64)
+        # seq2_tensor = tf.convert_to_tensor(seq2, tf.float64)
+        # # target_tensor = tf.convert_to_tensor(target, tf.float64)
+        # # target_tensor = tf.expand_dims(target, axis=-1)
+
         df_pairs_list.append(KeystrokePair(seq1, seq2, target))
 
     return df_pairs_list
-
 
 def make_pairs_from_features_dfs(dfs: List[pd.DataFrame], index_of_chunk: int) \
         -> Tuple[List[pd.DataFrame], List[pd.DataFrame]]:
     """
     Reads files from features dataset chunk-by-chunk &
-    makes genuine pairs & impostor pairs for each chunk.
+    makes genuine pairs & impostor pairs for each chunk
 
-    :param dfs: Pandas DataFrames that are to be used for pair creation.
+    :param dfs: Pandas DataFrames that are to be used for pair creation
     :param index_of_chunk: Index of the dataset chunk being processed in
-    the function call.
+    the function call
     :return: Tuple (genuine pairs, impostor pairs)
     """
-    from utils.general import split_by_section_id
+    from common.utils import split_by_section_id
 
     chunk_genuine_pairs = []
     chunk_impostor_pairs = []
@@ -82,46 +123,3 @@ def make_pairs_from_features_dfs(dfs: List[pd.DataFrame], index_of_chunk: int) \
         raise ValueError  # TODO: Remove this?
 
     return chunk_genuine_pairs, chunk_impostor_pairs
-
-
-def make_pair_batches(genuine_pairs: List[pd.DataFrame],
-                      impostor_pairs: List[pd.DataFrame],
-                      batch_size: int = None,
-                      shuffle_batches_flag: bool = True) -> List[List[pd.DataFrame]]:
-    """
-    Groups a number of genuine pairs & impostor pairs into batches.
-    Each batch contains half genuine pairs, half impostor pairs.
-
-    :param shuffle_batches_flag: Specify whether to shuffle batches; Needed for unit testing.
-    :param genuine_pairs: A list of Pandas DataFrames representing positive keystroke sequence
-    pairs (i.e., belonging to the same user).
-    :param impostor_pairs: A list of Pandas DataFrames representing negative keystroke sequence
-    pairs (i.e., belonging to different users).
-    :param batch_size: The size of each batch that should be created.
-    :return: A list containing all batches created using 'genuine_pairs' and 'impostor_pairs' param values.
-    """
-
-    batches = []
-    if not batch_size:
-        batch_size = conf.BATCH_SIZE
-
-    # Split genuine pairs & impostor pairs lists into halves
-    genuine_half_batches = list_to_chunks_by_size(genuine_pairs, batch_size // 2)
-    impostor_half_batches = list_to_chunks_by_size(impostor_pairs, batch_size // 2)
-
-    # Iterate through both lists of batch halves at once
-    for genuine_half, impostor_half in tqdm(zip(genuine_half_batches, impostor_half_batches),
-                                            total=len(genuine_pairs),
-                                            desc="[BATCHES] Making batches from chunk pairs"):
-        # Concatenate the two halves -> 'genuine_half' becomes a batch
-        genuine_half.extend(impostor_half)
-
-        # Randomly shuffle the batch before appending it to the list
-        # NOTE: This is to avoid batches always starting with genuine pairs
-        if shuffle_batches_flag:
-            np.random.shuffle(genuine_half)
-
-        # Add the batch to the list
-        batches.append(genuine_half)
-
-    return batches

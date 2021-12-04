@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
 
 # from features.main import *
-from features import main
+from common import utils
 
 
 class TestComputeIndividualFeatures(unittest.TestCase):
@@ -15,7 +15,7 @@ class TestComputeIndividualFeatures(unittest.TestCase):
         release_times = pd.Series(np.array([4, 5, 6]).astype(np.float64))
         expected = np.array([3, 3, 3]).astype(np.float64)
         # Act: define actual result & expected result
-        actual = main.compute_hold_latency(press_times, release_times)
+        actual = utils.compute_hold_latency(press_times, release_times)
         # Assert: Check that the actual result matches the expected one
         assert_array_equal(actual, expected)
 
@@ -25,7 +25,7 @@ class TestComputeIndividualFeatures(unittest.TestCase):
         release_times = pd.Series(np.array([1, 2, 3]).astype(np.float64))
         expected = np.array([0, 4, 4]).astype(np.float64)
         # Act
-        actual = main.compute_interkey_latency(press_times, release_times)
+        actual = utils.compute_interkey_latency(press_times, release_times)
         # Assert
         assert_array_equal(actual, expected)
 
@@ -34,7 +34,7 @@ class TestComputeIndividualFeatures(unittest.TestCase):
         press_times = pd.Series(np.array([4, 5, 6]).astype(np.float64))
         expected = np.array([0, 1, 1]).astype(np.float64)
         # Act
-        actual = main.compute_press_latency(press_times)
+        actual = utils.compute_press_latency(press_times)
         # Assert
         assert_array_equal(actual, expected)
 
@@ -43,11 +43,11 @@ class TestComputeIndividualFeatures(unittest.TestCase):
         release_times = pd.Series(np.array([2, 4, 6]).astype(np.float64))
         expected = np.array([0, 2, 2]).astype(np.float64)
         # Act
-        actual = main.compute_release_latency(release_times)
+        actual = utils.compute_release_latency(release_times)
         # Assert
         assert_array_equal(actual, expected)
 
-        # NOTE: This is pretty useless considering the existence of the other 4 tests in this file.
+        # NOTE: This is pretty useless considering the existence of the other 4 tests_pairs in this file.
         #       It would have made more sense to just write this test, given the code's structure.
 
     def test_compute_test_section_features_fcn(self):
@@ -69,6 +69,6 @@ class TestComputeIndividualFeatures(unittest.TestCase):
         )
         # Act
         # compute_sequence_features.__test__ = False
-        actual = main.compute_sequence_features(sequence_df=test_df)
+        actual = utils.compute_sequence_features(sequence_df=test_df)
         # Assert
         assert_frame_equal(actual, expected)

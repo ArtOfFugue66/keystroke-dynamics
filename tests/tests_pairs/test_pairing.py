@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
-from pairs.pairing import make_pairs_for_user, make_pair_batches
+from common.utils import make_pair_batches
+from pairs.utils import make_pairs_for_user
 import conf.pairs as conf
 
 
