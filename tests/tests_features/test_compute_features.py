@@ -4,9 +4,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
 
-# from features.main import *
-from common import utils
-
+# from common import utils
+from features import utils
 
 class TestComputeIndividualFeatures(unittest.TestCase):
     def test_compute_hold_latency_fcn(self):

@@ -4,7 +4,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 
 from features.main import pad_or_trim_df
-from common.utils import preprocess_df
+from features.utils import preprocess_df
 
 
 class TestDataFrameOperations(unittest.TestCase):
