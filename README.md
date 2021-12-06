@@ -15,6 +15,16 @@
 
 ---
 
+- To install required modules for the Python/Conda virtual environment used, run  
+`pip install -r requirements.txt`
+- To run existing unit tests, install `rednose` and run  
+    ``` 
+    pip install nosetests
+    nosetests --rednose --verbose tests/ 
+    ```
+
+---
+
 ### TODO
 
 - [x] Refactor tests in `pairs/tests/test_pairing.py` & `pairs/pairing.py:make_pairs()` until all tests pass
@@ -36,6 +46,6 @@
   - [ ] Write function that validates & tests a Siamese model
   - [ ] Write unit tests for the whole module
   - [ ] Write code that calls Tensorboard to plot metrics of model training/validation/testing
-- [ ] Build main module: Should read raw data, compute features, make pairs, do training-validation-testing split, call training method on Siamese RNN model
+- [x] Build main module: Should read raw data, compute features, make pairs, do training-validation-testing split, call training method on Siamese RNN model
 - [ ] Tune the `siamese` module until you confirm, using your own typing data, that the model works as intended
 - [ ] Refactor all data processing operations to use the `tf.data` API
