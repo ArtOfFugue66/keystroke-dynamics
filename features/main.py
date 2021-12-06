@@ -10,6 +10,15 @@ warnings.simplefilter('ignore')
 
 
 def pad_or_trim_df(df: pd.DataFrame, sequence_length: int) -> pd.DataFrame:
+    """
+    Function that pads/trims a DataFrame to a fixed length.
+    - for trimming, the DataFrame object's 'drop()' is used,
+    - for padding, the 'features.utils.pad_df()' utility function is called.
+
+    :param df: DataFrame object to pad/trim to 'sequence_length' size
+    :param sequence_length: Fixed length to pad/trim 'df' to
+    :return: The padded/trimmed or unaffected DataFrame.
+    """
     df_len = len(df)
     if df_len > sequence_length:                                        # If df is too long,
         df.drop(df.tail(df_len - sequence_length).index, inplace=True)  # trim it.
@@ -20,6 +29,20 @@ def pad_or_trim_df(df: pd.DataFrame, sequence_length: int) -> pd.DataFrame:
 
 
 def process_dataset_chunk(user_dfs: List[pd.DataFrame], sequence_length: int) -> Dict[int, pd.DataFrame]:
+    """
+    Function that processes the keystroke timing data of a number of users. By 'processing' we mean:
+    - Splitting a user's DataFrame into multiple DataFrames, one for each sentence (TEST_SECTION_ID),
+    - Computing the 4 features (HOLD_LATENCY, INTERKEY_LATENCY etc.) for each sequence DataFrame,
+    - Dropping unnecessary columns (PRESS_TIME, RELEASE_TIME) from the resulting DataFrames,
+    - Scaling all values between 0 and 1 and replacing NaN values with 0.0,
+    - Padding/trimming all sequence DataFrames to 'sequence_length' length,
+    - Concatenating all sequence DataFrames into a final DataFrame associated with the same user,
+    - Adding this final DataFrame to a dictionary.
+
+    :param user_dfs: List of DataFrames from the original dataset, belonging to multiple users
+    :param sequence_length: Fixed length of a keystroke sequence (sentence) to pad/trim to
+    :return: Dictionary of form {user's participant id: DataFrame with all processed sequences for the user}
+    """
     chunk_users_sequences = {}  # { PARTICIPANT_ID: [sequence_list] } dict
 
     for user_df in user_dfs:
@@ -48,6 +71,17 @@ def process_dataset_chunk(user_dfs: List[pd.DataFrame], sequence_length: int) ->
 
 
 def process_write_features(filename_chunk: List[str], sequence_length: int):
+    """
+    Function run by each Process created in 'compute_features_dataset()'.
+    It reads a subset of the files from the original dataset, processes
+    each file (computes features, normalizes data, pads/trims sequences),
+    and writes the resulting DataFrames to a file named with the
+    '_features.txt' suffix.
+
+    :param filename_chunk: Subset of filenames from the whole dataset.
+    :param sequence_length: Nr. of keystrokes in a sequences (used for padding/trimming sequences)
+    :return: None
+    """
     chunk_of_dataframes = read_files_from_original_dataset(filename_chunk)
     chunk_of_dataframes_with_features = process_dataset_chunk(chunk_of_dataframes, sequence_length)
 
@@ -64,6 +98,7 @@ def compute_features_dataset():
     This function will run if this Python file is run directly.
     It reads files from the raw dataset into Pandas DataFrames in a chunk-by-chunk fashion,
     computes the timing features for all users & writes the resulting DataFrames to a new folder.
+
     :return: None
     """
 
@@ -80,9 +115,9 @@ def compute_features_dataset():
     start_time = time.time()  # ----------- Capture timestamp before CPU-intensive code ----------- #
 
     for outer_chunk_index, outer_chunk in tqdm(enumerate(all_dataset_chunks), total=len(all_dataset_chunks), desc="[INFO] Processing dataset chunks"):  # 40 chunks of size 100
-        thread_chunks = list(list_to_chunks_by_size(outer_chunk, conf.THREAD_CHUNK_SIZE))  # 10 chunks of size 10
+        process_chunks = list(list_to_chunks_by_size(outer_chunk, conf.PROCESS_CHUNK_SIZE))  # 10 chunks of size 10
         process_list = []
-        for inner_chunk_index, inner_chunk in enumerate(thread_chunks):  # For each 10 files
+        for inner_chunk_index, inner_chunk in enumerate(process_chunks):  # For each 10 files
             # Create a process that handles the files,
             process = Process(target=process_write_features, args=(inner_chunk, conf.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
             # append in to the process list

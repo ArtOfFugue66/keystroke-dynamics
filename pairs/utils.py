@@ -46,11 +46,10 @@ def read_features_from_dataset(filenames: List[str], index_of_chunk: int) -> pd.
 def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
                         sequences_user_2: List[pd.DataFrame] = None) -> List:
     """
-    Make genuine or impostor pairs for a certain user using
-    his sequences, and for impostor pairs, those of another user.
+    Make genuine pairs for a certain user using his sequences,
+    and impostor pairs using his sequence & those of another user.
 
-    param sequences_user_1: List of sequences belonging to 1st user
-    :param sequences_user_1:
+    :param sequences_user_1: List of sequences belonging to 1st user
     :param sequences_user_2: List of sequences belonging to 2nd user
                              (same user in the case of genuine pairs)
     :param pair_type_flag:   Switch that determines the type of pairs to be created
@@ -76,7 +75,7 @@ def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFram
         # if 'PARTICIPANT_ID' in seq2.columns and 'TEST_SECTION_ID' in seq2.columns:
         seq2 = seq2.drop(['PARTICIPANT_ID', 'TEST_SECTION_ID'], axis=1)
 
-        # TODO: Convert DataFrames to Tensors; If there's too much code involved, make a separate fcn
+        # NOTE: Converting DataFrames to Tensors results in errors when calling '.fit()'
         # seq1_tensor = tf.convert_to_tensor(seq1, tf.float64)
         # seq2_tensor = tf.convert_to_tensor(seq2, tf.float64)
         # # target_tensor = tf.convert_to_tensor(target, tf.float64)
@@ -89,13 +88,13 @@ def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFram
 def make_pairs_from_features_dfs(dfs: List[pd.DataFrame], index_of_chunk: int) \
         -> Tuple[List[pd.DataFrame], List[pd.DataFrame]]:
     """
-    Reads files from features dataset chunk-by-chunk &
-    makes genuine pairs & impostor pairs for each chunk
+    Read files from features dataset chunk-by-chunk &
+    make genuine pairs & impostor pairs for each chunk
 
-    :param dfs: Pandas DataFrames that are to be used for pair creation
+    :param dfs: Pandas DataFrames to be used for pair creation
     :param index_of_chunk: Index of the dataset chunk being processed in
-    the function call
-    :return: Tuple (genuine pairs, impostor pairs)
+    the function call (for progress bar & error handling)
+    :return: Tuple (genuine pairs, impostor pairs) for given dataset chunk
     """
     from common.utils import split_by_section_id
 
@@ -119,7 +118,7 @@ def make_pairs_from_features_dfs(dfs: List[pd.DataFrame], index_of_chunk: int) \
                                                          impostor_sequences)  # make impostor pairs using this impostor's sequences
                     chunk_impostor_pairs.extend(impostor_pairs)  # and add them to the list.
     except Exception as e:
+        # TODO: Fix this exception handling (remove 'PARTICIPANT_ID' slicing)
         print(f"\n[ERROR] Skipping user {user_df['PARTICIPANT_ID'][0]}'s file: {e}")
-        raise ValueError  # TODO: Remove this?
 
     return chunk_genuine_pairs, chunk_impostor_pairs
