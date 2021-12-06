@@ -53,11 +53,12 @@ def make_siamese(batch_size, input_shape, embedding_dimensions=128):
     merge_layer = Lambda(euclidean_distance, name="Euclidean_distance", output_shape=(1, 1))([xi_embedded, xj_embedded])
 
     # Add another layer of normalization
-    batch_norm_layer = BatchNormalization(name="Batch_Norm")(merge_layer)
+    # batch_norm_layer = BatchNormalization(name="Batch_Norm")(merge_layer)
 
     # Define the output layer; 'softmax' activation because the output should be interpreted as
     # the probability that the two input sequences are similar
-    output_layer = Dense(1, activation="softmax")(batch_norm_layer)
+    # output_layer = Dense(1, activation="softmax")(batch_norm_layer)
+    output_layer = Dense(1, activation="softmax")(merge_layer)
 
     # Set up parameters required for creating & compiling the model
     # TODO: Add optimizer parameter & tweak the optimizer-related parameters
