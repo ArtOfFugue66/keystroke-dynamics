@@ -13,38 +13,43 @@ def main():
     from siamese.utils import make_siamese
 
     chunk_size = features_conf.CHUNK_SIZE  # Get size of a dataset chunk from features conf file
-    features_filenames = os.listdir(features_conf.OUTPUT_DIR)  # List the features dataset directory
-    np.random.shuffle(features_filenames)  # Randomly shuffle the dataset filenames list
-    features_filenames_chunks = common_utils.list_to_chunks_by_size(features_filenames[:chunk_size * 2],
-                                                                    chunk_size)  # Split the list of filenames in chunks
-    # features_filenames_chunks = utils.general.list_to_chunks_by_size(features_filenames, chunk_size)  # Split the list of filenames in chunks
 
-    all_chunk_batches = []
+    # List the features dataset directory
+    features_filenames = os.listdir(features_conf.OUTPUT_DIR)
 
-    for chunk_index, chunk in enumerate(features_filenames_chunks):  # Iterate through the chunks of filenames
-        chunk_of_features = pairing_utils.read_features_from_dataset(chunk, chunk_index)  # Read each file in DataFrames
-        chunk_genuine_pairs, chunk_impostor_pairs = pairing_utils.make_pairs_from_features_dfs(chunk_of_features,
-                                                                                               chunk_index)  # Make genuine & impostor pairs for all users in the chunk
+    # Randomly shuffle the dataset filenames list
+    np.random.shuffle(features_filenames)
+
+    # Split the list of filenames in chunks
+    features_filenames_chunks = common_utils.list_to_chunks_by_size(features_filenames[:chunk_size * 2], chunk_size)
+
+    all_chunk_batches = []  # List to hold batches from all chunks
+
+    # Iterate through the chunks of filenames
+    for chunk_index, chunk in enumerate(features_filenames_chunks):
+        # Read each file in DataFrames
+        chunk_of_features = pairing_utils.read_features_from_dataset(chunk, chunk_index)
+        # Make genuine & impostor pairs for all users in the chunk
+        chunk_genuine_pairs, chunk_impostor_pairs = pairing_utils.make_pairs_from_features_dfs(chunk_of_features, chunk_index)
+        # Make batches using the genuine & impostor pairs of this chunk
         all_chunk_batches.extend(common_utils.make_pair_batches(chunk_genuine_pairs,
                                                                 chunk_impostor_pairs,
                                                                 batch_size=siamese_conf.BATCH_SIZE,
-                                                                shuffle_batches_flag=True))  # Make batches using the genuine & impostor pairs of this chunk
-    # Get total number of batches
-    total_no_batches = len(all_chunk_batches)
+                                                                shuffle_batches_flag=True))
+
     # Perform train-test-validation split on list of batches
-    train_batches, test_batches, validation_batches = all_chunk_batches[:int(total_no_batches * 0.6)], \
-                                                      all_chunk_batches[
-                                                      int(total_no_batches * 0.6):int(total_no_batches * 0.8)], \
-                                                      all_chunk_batches[int(total_no_batches * 0.8):]
-    # Unravel keystroke pairs from all batches
+    train_batches, test_batches, validation_batches = common_utils.test_train_val_split(all_chunk_batches, (0.8, 0.2, 0.2))
+
+    # Unravel keystroke pairs from all batches, for training, testing & validation
     train_first_sequences, train_second_sequences, train_target_distances = common_utils.unravel_batches(train_batches)
     test_first_sequences, test_second_sequences, test_target_distances = common_utils.unravel_batches(test_batches)
-    validation_first_sequences, validation_second_sequences, validation_target_distances = common_utils.unravel_batches(
-        validation_batches)
+    validation_first_sequences, validation_second_sequences, validation_target_distances = common_utils.unravel_batches(validation_batches)
+
     # Get a siamese RNN model object
     batch_size, input_shape, emb_dims = siamese_conf.BATCH_SIZE, siamese_conf.INPUT_SHAPE, siamese_conf.EMBEDDING_DIMENSIONS
     siamese_model = make_siamese(batch_size, input_shape, emb_dims)
 
+    # Convert keystroke & target distances sequences from tf.EagerTensor to np.ndarray
     train_first_sequences = np.asarray(train_first_sequences)
     train_second_sequences = np.asarray(train_second_sequences)
     train_target_distances = np.asarray(train_target_distances)
