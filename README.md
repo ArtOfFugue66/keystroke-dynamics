@@ -26,6 +26,3 @@
     ```
 
 ---
-
-[ ] TODO: Main program workflow documentation 
-(include functions in 'common' folder)

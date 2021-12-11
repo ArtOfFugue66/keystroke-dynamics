@@ -25,4 +25,5 @@
 - [x] Build main module: Should read raw data, compute features, make pairs, do training-validation-testing split, call training method on Siamese RNN model
 - [ ] Tune the `siamese` module until you confirm, using your own typing data, that the model works as intended
   - [ ] Add an optimizer in `siamese.utils.make_siamese()` & add its name to the model name
-- [ ] Refactor all data processing operations to use the `tf.data` API
+- [ ] (Optional) Refactor all data processing operations to use the `tf.data` API
+- [ ] Main program workflow documentation (include functions in 'common' folder)
