@@ -12,8 +12,8 @@
       + Less resulting files (as many files as there are threads processing chunks of the features dataset)
 - [x] Refactor project & code structure to be easier to debug and refactor
 - [ ] Solve error handling in `pairing.make_pairs_from_features_dfs()`; Also print error filename in `except` statement
-- [ ] Add comments to all lines in all files in all modules
-- [ ] Add READMEs to each package in the project
+- [x] Add comments to all lines in all files in all modules
+- [x] Add READMEs to each package in the project
 - [ ] Write `siamese` module: Should contain everything related to the Siamese RNN necessary for the user authentication
   - [x] Use [Image similarity estimation using a Siamese Network with a contrastive loss](https://keras.io/examples/vision/siamese_contrastive/) tutorial as reference
   - [x] Write function that builds "tower" network (LSTM embedding network)
