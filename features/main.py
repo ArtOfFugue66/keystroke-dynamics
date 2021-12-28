@@ -2,7 +2,7 @@ import pandas as pd
 from typing import List, Dict
 import warnings
 
-from . import conf as conf
+import features.conf
 from features.utils import pad_df, compute_sequence_features, preprocess_df, read_files_from_original_dataset
 from common.utils import list_to_chunks_by_size
 warnings.filterwarnings('ignore')
@@ -85,7 +85,7 @@ def process_write_features(filename_chunk: List[str], sequence_length: int):
     chunk_of_dataframes = read_files_from_original_dataset(filename_chunk)
     chunk_of_dataframes_with_features = process_dataset_chunk(chunk_of_dataframes, sequence_length)
 
-    features_output_dir = f"{conf.OUTPUT_DIR}"
+    features_output_dir = f"{features.conf.OUTPUT_DIR}"
 
     for participant_id, all_user_sequences in chunk_of_dataframes_with_features.items():
         file_to_write = open(f"{features_output_dir}/{participant_id}_features.txt", "w+")
@@ -107,19 +107,19 @@ def compute_features_dataset():
     from multiprocessing import Process
     import time
 
-    os.chdir(conf.SMALL_DATASET_DIR)
+    os.chdir(features.conf.SMALL_DATASET_DIR)
     dataset_filenames = os.listdir(".")
 
-    all_dataset_chunks = list(list_to_chunks_by_size(dataset_filenames, conf.CHUNK_SIZE))  # 40 chunks of size 100
+    all_dataset_chunks = list(list_to_chunks_by_size(dataset_filenames, features.conf.CHUNK_SIZE))  # 40 chunks of size 100
 
     start_time = time.time()  # ----------- Capture timestamp before CPU-intensive code ----------- #
 
     for outer_chunk_index, outer_chunk in tqdm(enumerate(all_dataset_chunks), total=len(all_dataset_chunks), desc="[INFO] Processing dataset chunks"):  # 40 chunks of size 100
-        process_chunks = list(list_to_chunks_by_size(outer_chunk, conf.PROCESS_CHUNK_SIZE))  # 10 chunks of size 10
+        process_chunks = list(list_to_chunks_by_size(outer_chunk, features.conf.PROCESS_CHUNK_SIZE))  # 10 chunks of size 10
         process_list = []
         for inner_chunk_index, inner_chunk in enumerate(process_chunks):  # For each 10 files
             # Create a process that handles the files,
-            process = Process(target=process_write_features, args=(inner_chunk, conf.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
+            process = Process(target=process_write_features, args=(inner_chunk, features.conf.SEQUENCE_LENGTH), name=f"process-{inner_chunk_index}")
             # append in to the process list
             process_list.append(process)
             # and start it
