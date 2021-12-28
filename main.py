@@ -30,7 +30,7 @@ def main():
         # Read each file in DataFrames
         chunk_of_features = pairing_utils.read_features_from_dataset(chunk, chunk_index)
         # Make genuine & impostor pairs for all users in the chunk
-        chunk_genuine_pairs, chunk_impostor_pairs = pairing_utils.make_pairs_from_features_dfs(chunk_of_features, chunk_index)
+        chunk_genuine_pairs, chunk_impostor_pairs = pairing_utils.make_pairs_from_features_dfs(dict(zip(chunk, chunk_of_features)), chunk_index)
         # Make batches using the genuine & impostor pairs of this chunk
         all_chunk_batches.extend(common_utils.make_pair_batches(chunk_genuine_pairs,
                                                                 chunk_impostor_pairs,
