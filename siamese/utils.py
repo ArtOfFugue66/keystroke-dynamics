@@ -1,4 +1,6 @@
 from typing import Tuple
+
+import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.python.keras import Input, Model
@@ -17,7 +19,7 @@ def euclidean_distance(sequence_embeddings: Tuple[tf.Tensor, tf.Tensor]) -> tf.T
     """
     xi_vect, xj_vect = sequence_embeddings
 
-    # Option 1: Using tensor operations
+    # # Option 1: Using tensor operations
     eucl_dist = tf.norm(tf.math.subtract(xi_vect, xj_vect), ord='euclidean', keepdims=True)
     return eucl_dist
 
@@ -71,10 +73,29 @@ def make_lstm(input_shape: Tuple[int, int],
     # timestep in the sequence (i.e., output shape should be 1 x 128 as opposed to SEQUENCE_LENGTH x 128)
     lstm_2 = LSTM(embedding_dimensions, name="LSTM_2", activation="tanh")(batch_norm_2)
 
-    # NOTE: No need to add a loss to this model since the weights should update based on
-    #       based on the value of the contrastive loss, used in the Siamese model
+    # NOTE: No need to add a loss to this model since the weights should update based
+    #       on the value of the contrastive loss, used in the Siamese model
     # Return a tf.python.keras.Model object with specified input layers & output layers
     return Model(inputs=visible, outputs=lstm_2, name="Sister_network")
+
+def name_model(loss, batch_size: int, embedding_dims, optimizer=None):
+    """
+    Function that generates a uniquely identifying name for a model architecture
+    based on the relevant objects that are used to compile the model.
+
+    :param loss: Loss function object
+    :param batch_size: Number of samples processed before the model weights are updated
+    :param embedding_dims: Dimension count of vectors output by the sister network
+    :param optimizer: Optimizer object used to increase training efficiency
+    :return: A uniquely identifying name for the model that includes info from all params
+    """
+    prefix = conf.SIAMESE_NAME_PREFIX
+    loss_str = 'TFAddonsCL' if type(loss) == tfa.losses.ContrastiveLoss else 'CustomCL'
+    optimizer_str = 'NOOPT' if optimizer is None else str(optimizer)  # TODO: Debug this when an optimizer is added
+    batch_size_str = str(batch_size) + "BS"
+    embedding_dims_str = str(embedding_dims) + "ED"
+
+    return f"{prefix}_{loss_str}_{optimizer_str}_{batch_size_str}_{embedding_dims_str}"
 
 def make_siamese(batch_size: int,
                  input_shape: Tuple[int, int],
@@ -111,13 +132,10 @@ def make_siamese(batch_size: int,
     model_loss = tfa.losses.ContrastiveLoss(margin=pairs_conf.MARGIN,
                                             reduction=tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE,
                                             name="contrastive_loss")
+    # model_loss = tf.losses.BinaryCrossentropy()
     model_optimizer = None  # TODO after you get the model to train
     model_metrics = ['accuracy']
-    model_name = f"{conf.SIAMESE_NAME_PREFIX}_" \
-                 f"{'TFAddonsCL' if type(model_loss) == tfa.losses.ContrastiveLoss else 'SelfCL'}_" \
-                 f"{'NOOPT' if model_optimizer is None else {str(model_optimizer)}}" \
-                 f"{batch_size}BS_" \
-                 f"{embedding_dimensions}ED"
+    model_name = name_model(model_loss, batch_size, embedding_dimensions, model_optimizer)
 
     # Instantiate a Siamese model that takes as input two keystroke sequences and outputs
     # the confidence (probability) that they are similar (belong to the same user)
