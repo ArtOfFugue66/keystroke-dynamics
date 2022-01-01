@@ -1,7 +1,7 @@
 from __future__ import annotations
 import csv
 import itertools
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -43,11 +43,12 @@ def read_features_from_dataset(filenames: List[str], index_of_chunk: int) -> pd.
     elif len(dataFrames) == 1:  # If a single file has been read
         return dataFrames[0]
 
+
 def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFrame],
                         sequences_user_2: List[pd.DataFrame] = None) -> List:
     """
     Make genuine pairs for a certain user using his sequences,
-    and impostor pairs using his sequence & those of another user.
+    and impostor pairs using his sequences & those of another user.
 
     :param sequences_user_1: List of sequences belonging to 1st user
     :param sequences_user_2: List of sequences belonging to 2nd user
@@ -85,13 +86,15 @@ def make_pairs_for_user(pair_type_flag: bool, sequences_user_1: List[pd.DataFram
 
     return df_pairs_list
 
-def make_pairs_from_features_dfs(dfs: List[pd.DataFrame], index_of_chunk: int) \
+
+def make_pairs_from_features_dfs(dfs: Dict[List[str], List[pd.DataFrame]], index_of_chunk: int) \
         -> Tuple[List[pd.DataFrame], List[pd.DataFrame]]:
     """
     Read files from features dataset chunk-by-chunk &
     make genuine pairs & impostor pairs for each chunk
 
-    :param dfs: Pandas DataFrames to be used for pair creation
+    :param dfs: List of dataset filenames and their corresponding Pandas DataFrames,
+    which will be used for pair creation
     :param index_of_chunk: Index of the dataset chunk being processed in
     the function call (for progress bar & error handling)
     :return: Tuple (genuine pairs, impostor pairs) for given dataset chunk
@@ -102,23 +105,23 @@ def make_pairs_from_features_dfs(dfs: List[pd.DataFrame], index_of_chunk: int) \
     chunk_impostor_pairs = []
 
     try:
-        for user_df in tqdm(dfs, total=len(dfs), desc=f"[PAIRS] Making pairs for chunk #{index_of_chunk}"):
-            user_sequences = split_by_section_id(user_df)  # split it into sequences,
+        for filename, df in tqdm(dfs.items(), total=len(dfs), desc=f"[PAIRS] Making pairs for chunk #{index_of_chunk}"):
+            user_sequences = split_by_section_id(df)  # split it into sequences,
             chunk_genuine_pairs.extend(
-                make_pairs_for_user(True, user_sequences))  # add the user's genuine pairs to this chunk's genuine pairs list.
+                make_pairs_for_user(pair_type_flag=True,
+                                    sequences_user_1=user_sequences))  # add the user's genuine pairs to this chunk's genuine pairs list.
 
-            impostor_list = [x for x in dfs if
-                             not x.equals(user_df)]  # Iterate through all users in the chunk except the current one;
+            impostor_list = [x for x in dfs.values() if not x.equals(df)]  # Iterate through all users in the chunk except the current one;
 
             for impostor_df in impostor_list:  # For each "impostor"
                 # (if we don't have enough impostor pairs for the current chunk),
                 if len(chunk_impostor_pairs) <= len(chunk_genuine_pairs):
                     impostor_sequences = split_by_section_id(impostor_df)  # split his DataFrame into sequences,
-                    impostor_pairs = make_pairs_for_user(False, user_sequences,
-                                                         impostor_sequences)  # make impostor pairs using this impostor's sequences
+                    impostor_pairs = make_pairs_for_user(pair_type_flag=False,
+                                                         sequences_user_1=user_sequences,
+                                                         sequences_user_2=impostor_sequences)  # make impostor pairs using this impostor's sequences
                     chunk_impostor_pairs.extend(impostor_pairs)  # and add them to the list.
     except Exception as e:
-        # TODO: Fix this exception handling (remove 'PARTICIPANT_ID' slicing)
-        print(f"\n[ERROR] Skipping user {user_df['PARTICIPANT_ID'][0]}'s file: {e}")
+        print(f"\n[ERROR] Skipping {filename} file: {e}")
 
     return chunk_genuine_pairs, chunk_impostor_pairs

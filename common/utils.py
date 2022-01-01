@@ -9,15 +9,19 @@ from tqdm import tqdm
 from pairs import conf
 
 
-def split_list_by_percentages(list_to_split: List, *percentages) -> List[List]:
+def test_train_val_split(list_to_split: List, percentages: Tuple) -> Tuple[List, List, List]:
     """
-    TODO
     Take a list and split it into sub-lists by percentages (e.g., 80%-10%-10%).
 
     @param list_to_split: List that should be split into sub-lists.
     @param percentages: An arbitrary number of floats that specify the number of sublists & the size for each resulting sublist.
     """
-    pass
+    train_pct, test_pct, val_pct = percentages
+    no_elements = len(list_to_split)
+
+    return list_to_split[:int(no_elements * train_pct)], \
+           list_to_split[int(no_elements * train_pct):int(no_elements * test_pct)], \
+           list_to_split[int(no_elements * test_pct):]
 
 def unravel_batches(batch_list: List[Tuple[pd.DataFrame, pd.DataFrame, np.float64]]) \
         -> Tuple[List[pd.DataFrame], List[pd.DataFrame], List[np.float64]]:
@@ -83,7 +87,7 @@ def split_by_section_id(dfs: List[pd.DataFrame] | pd.DataFrame) -> List[pd.DataF
 
 def make_pair_batches(genuine_pairs: List[pd.DataFrame],
                       impostor_pairs: List[pd.DataFrame],
-                      batch_size: int = None,
+                      batch_size: int = conf.BATCH_SIZE,
                       shuffle_batches_flag: bool = True) -> List[List[pd.DataFrame]]:
     """
     Groups a number of genuine pairs & impostor pairs into batches
@@ -99,8 +103,6 @@ def make_pair_batches(genuine_pairs: List[pd.DataFrame],
     """
 
     batches = []
-    if not batch_size:
-        batch_size = conf.BATCH_SIZE
 
     # Split genuine pairs & impostor pairs lists into halves
     genuine_half_batches = list_to_chunks_by_size(genuine_pairs, batch_size // 2)
