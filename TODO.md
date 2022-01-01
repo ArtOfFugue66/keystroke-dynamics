@@ -14,16 +14,16 @@
 - [x] Solve error handling in `pairs.make_pairs_from_features_dfs()`; Also print error filename in `except` statement
 - [x] Add comments to all lines in all files in all modules
 - [x] Add READMEs to each package in the project
-- [ ] Main program workflow documentation (step-by-step explanation of the data manipulation process)
+- [x] Main program workflow documentation (step-by-step explanation of the data manipulation process)
 - [ ] Write `siamese` module: Should contain everything related to the Siamese RNN necessary for the user authentication
   - [x] Use [Image similarity estimation using a Siamese Network with a contrastive loss](https://keras.io/examples/vision/siamese_contrastive/) tutorial as reference
   - [x] Write function that builds "tower" network (LSTM embedding network)
   - [x] Write function that builds Siamese network
-  - [ ] Migrate code that builds the NAME for the Siamese network to a separate function & call it in `siamese.utils.make_lstm()`
+  - [x] Migrate code that builds the NAME for the Siamese network to a separate function & call it in `siamese.utils.make_lstm()`
   - [ ] Write function that validates & tests a Siamese model
   - [ ] Write unit tests for the whole module
   - [ ] Write code that calls Tensorboard to plot metrics of model training/validation/testing
 - [x] Build main module: Should read raw data, compute features, make pairs, do training-validation-testing split, call training method on Siamese RNN model
 - [ ] Tune the `siamese` module until you confirm, using your own typing data, that the model works as intended
   - [ ] Add an optimizer in `siamese.utils.make_siamese()` & add its name to the model name
-- [ ] (Optional) Refactor all data processing operations to use the `tf.data` APIf
+- [ ] (Optional) Refactor all data processing operations to use the `tf.data` API
