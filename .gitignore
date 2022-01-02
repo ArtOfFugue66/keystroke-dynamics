@@ -4,8 +4,8 @@
 # Pycache
 __pycache__/
 
-# Keystroke data capture stuff (will be removed later)
-keystroke-capture/
+# JSON files
+*.json
 
 # Profiler files
 *.pclprof
