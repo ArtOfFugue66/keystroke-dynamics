@@ -15,6 +15,10 @@
 - [x] Add comments to all lines in all files in all modules
 - [x] Add READMEs to each package in the project
 - [x] Main program workflow documentation (step-by-step explanation of the data manipulation process)
+- [ ] Write `capture` module: Should contain everything related to capturing timestamps of key presses & releases
+  - [ ] Unregister callback function from hook when the `write_keystroke_data()` fcn exists successfully
+  - [ ] Stop execution of all threads when asserting `len(press_times) == len(release_times)`  
+  - 
 - [ ] Write `siamese` module: Should contain everything related to the Siamese RNN necessary for the user authentication
   - [x] Use [Image similarity estimation using a Siamese Network with a contrastive loss](https://keras.io/examples/vision/siamese_contrastive/) tutorial as reference
   - [x] Write function that builds "tower" network (LSTM embedding network)
