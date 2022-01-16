@@ -9,8 +9,8 @@ import pandas as pd
 from loguru import logger
 import conf
 
-finished_capturing = False
-event_timing_dict = {}
+# finished_capturing = False
+# event_timing_dict = {}
 timestamp_pairs = []
 no_up_events = 0
 
@@ -89,11 +89,11 @@ def pair_events(event_list: List[kb.KeyboardEvent]) -> List[Tuple[kb.KeyboardEve
     keyup_events = sorted(keyup_events, key=lambda x: x.time, reverse=False)
 
     # Go through both lists and pair events based on event (key) name
-    for i in keydown_events:
-        for j in keyup_events:
-            if j.name == i.name:
-                event_pairs.append((i, j))
-                keyup_events.remove(j)
+    for press in keydown_events:
+        for release in keyup_events:
+            if release.name == press.name:
+                event_pairs.append((press, release))
+                keyup_events.remove(release)
                 break
 
     return event_pairs
