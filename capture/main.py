@@ -1,64 +1,42 @@
 from __future__ import annotations
+
+import copy
+from typing import List, Tuple
+
 import keyboard as kb
 import numpy as np
 import pandas as pd
-
+from loguru import logger
 import conf
 
 finished_capturing = False
-event_list = []
+event_timing_dict = {}
+timestamp_pairs = []
 no_up_events = 0
 
 
-def event_list_to_df() -> pd.DataFrame | None:
-    """
-    TODO: Pair up keyup and keydown events
-    :return:
-    """
-    global event_list
+def sequence_events_to_df(event_pair_list: List[Tuple[kb.KeyboardEvent, kb.KeyboardEvent]]) -> pd.DataFrame | None:
+    press_times, release_times, letters = [], [], []
 
-    press_times, release_times = [], []
-
-    for i, event1 in enumerate(event_list):
-        if event1.event_type == "down":
-            press_times.append(event1.time)
-            for event2 in event_list[i:]:  # Search for a later event
-                if event2.scan_code == event1.scan_code and event2.event_type == "up":  # with the same scan code
-                    release_times.append(event2.time)
-                    event_list.remove(event1)  # Remove the two events from the list
-                    event_list.remove(event2)
-
-    try:
-        # Raise an AssertionError if the lengths of the two lists are not equal
-        assert len(press_times) == len(release_times)
-    except AssertionError:
-        print("[ERROR] Nr of keydown timestamps & keyup timestamps does not match!")
-        return None
+    for timestamp_tuple in event_pair_list:
+        letters.append(timestamp_tuple[0].name)
+        press_times.append(timestamp_tuple[0].time)
+        release_times.append(timestamp_tuple[1].time)
 
     df = pd.DataFrame()
 
-    participant_id_col = pd.Series(conf.PARTICIPANT_ID * len(press_times), dtype=np.int32)
+    participant_id_col = pd.Series([conf.PARTICIPANT_ID] * len(press_times), dtype=np.int32)
     df['PARTICIPANT_ID'] = participant_id_col
-    test_section_id_col = pd.Series(conf.TEST_SECTION_ID * len(press_times), dtype=np.int32)
+    test_section_id_col = pd.Series([conf.TEST_SECTION_ID] * len(press_times), dtype=np.int32)
     df['TEST_SECTION_ID'] = test_section_id_col
     press_times_col = pd.Series(press_times, dtype=np.float64)
-    df['PRESS_TIMES'] = press_times_col
+    df['PRESS_TIME'] = press_times_col
     release_times_col = pd.Series(release_times, dtype=np.float64)
-    df['RELEASE_TIMES'] = release_times_col
+    df['RELEASE_TIME'] = release_times_col
+    letters_col = pd.Series(letters, dtype=str)
+    df['LETTER'] = letters_col
 
     return df
-
-def write_keystroke_data():
-    """
-    TODO: Later on, implement functions that make DataFrames from JSON data & call them here
-    :return: None
-    """
-    global event_list
-
-    with open(conf.FILENAME, "w+") as file_handle:
-        df = event_list_to_df()
-        if df:
-            df.to_csv(file_handle, sep='\t', encoding='ISO-8859-1', line_terminator='\n', index=False)
 
 
 def handle_key_hold(kb_event: kb.KeyboardEvent) -> bool:
@@ -67,43 +45,89 @@ def handle_key_hold(kb_event: kb.KeyboardEvent) -> bool:
     :param kb_event: Event to check for duplicates
     :return: True if user is holding down the key, False otherwise
     """
-    global event_list
-    last_event = event_list[-1]  # Get last event in the list
+    global event_timing_dict
 
-    if last_event.scan_code == kb_event.scan_code and last_event.event_type == kb_event.event_type:
-        return True  # Event is not a duplicate of the last one
+    if len(event_timing_dict) <= 0:
+        return False
+
+    scan_code = kb_event.scan_code
+
+    # If the key has already been pressed but has no release timestamp
+    if scan_code in event_timing_dict.keys() and kb_event.event_type == "down":
+        return True
     else:
-        return False  # Key is not being held down
+        return False  # Key already has a press timestamp and a release timestamp
 
 
+@logger.catch
 def keypress_callback(kb_event: kb.KeyboardEvent) -> None:
-    global finished_capturing, event_list, no_up_events
+    global finished_capturing, event_timing_dict, timestamp_pairs, no_up_events
 
-    if no_up_events == conf.SEQUENCE_LENGTH:  # If enough keyup events are captured
-        finished_capturing = True  # Set key capture stop flag
-        write_keystroke_data()  # Write user's session data to the disk
-        return
-
-    if len(event_list) == 0:  # If this is the first event
-        event_list.append(kb_event)  # Skip checks and just add the event to the list
+    if len(timestamp_pairs) >= conf.MAX_SEQUENCE_LENGTH:  # If enough keyup events are captured
+        print("[INFO] Keystroke buffer limit reached!")
         return
 
     if kb_event.event_type == "down":
         if handle_key_hold(kb_event):  # If key is being held down
             return  # Do not add event to the list
         else:
-            event_list.append(kb_event)  # Otherwise, add it
+            event_timing_dict[kb_event.scan_code] = kb_event.time
     else:
-        event_list.append(kb_event)
-        no_up_events += 1  # Keep count of keyup events that occur
+        scan_code = kb_event.scan_code
+        timestamp_pairs.append((kb_event.name, event_timing_dict[scan_code], kb_event.time))
 
+
+def pair_events(event_list: List[kb.KeyboardEvent]) -> List[Tuple[kb.KeyboardEvent, kb.KeyboardEvent]]:
+    event_pairs = []
+
+    # Split events into two lists: keydown & keyup
+    keydown_events = [e for e in event_list if e.event_type == "down"]
+    keyup_events = [e for e in event_list if e.event_type == "up"]
+
+    # Sort events by time
+    keydown_events = sorted(keydown_events, key=lambda x: x.time, reverse=False)
+    keyup_events = sorted(keyup_events, key=lambda x: x.time, reverse=False)
+
+    # Go through both lists and pair events based on event (key) name
+    for i in keydown_events:
+        for j in keyup_events:
+            if j.name == i.name:
+                event_pairs.append((i, j))
+                keyup_events.remove(j)
+                break
+
+    return event_pairs
 
 def main():
     global finished_capturing
-    kb.hook(keypress_callback)
-    kb.wait()
-    if finished_capturing:
-        kb.unhook_all()
+
+    conf.PARTICIPANT_ID += 1
+    sequence_events, dfs = [], []
+
+    print("[INFO] Capturing keystroke data...")
+    for i in range(conf.NUM_SECTIONS_TO_CAPTURE):
+        print(f"[INFO] Capturing info for sequence #{i}. Press ESC when done, if necessary.")
+        for j in range(conf.MAX_SEQUENCE_LENGTH * 2):
+            event = kb.read_event()
+            if event.name == "esc":
+                print(f"[INFO] Finished typing sentence. Continuing to {i+1}")
+            if handle_key_hold(event):  # If the event indicates that the key is being held down,
+                j -= 1  # decrement counter
+                continue  # and move on to the next event read.
+            else:
+                sequence_events.append(event)
+        print("\n[INFO] Sequence length achieved.")
+        conf.TEST_SECTION_ID += 1
+
+        sequence_event_pairs = pair_events(sequence_events)
+        dfs.append(sequence_events_to_df(sequence_event_pairs))
+
+        sequence_events = []  # Empty list of sequence events
+
+    for df in dfs:
+        df.to_csv(conf.FILENAME, sep='\t', mode='a+', encoding='ISO-8859-1', line_terminator='\n', index=False)
+
+    print('done')
 
 
 if __name__ == "__main__":
