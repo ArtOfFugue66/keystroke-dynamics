@@ -23,8 +23,10 @@
     - [x] Increment conf.PARTICIPANT_ID on program run
     - [x] Capture more sequences (repeatedly capture keystrokes from e.g., 5 different sequences)
     - [x] Keep track of and increment test section ID of a given user
-    - [ ] Tidy up the capture code
     - [ ] Fine tune the newly-written capture code
+      - [ ] Reduce processing time for a single keyboard event; Else we lose typing data
+      - [ ] Stop program for aprox. 2s when typing for a section is done and prompt for him/her to write another sentence
+    - [ ] Tidy up the capture code
     - [ ] Write unit tests
     - [ ] Manually test things like how the data is affected if the last event is a keydown event
   - [ ] Migrate functions into separate file(s) inside the module
