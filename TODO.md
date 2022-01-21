@@ -24,7 +24,7 @@
     - [x] Capture more sequences (repeatedly capture keystrokes from e.g., 5 different sequences)
     - [x] Keep track of and increment test section ID of a given user
     - [ ] Fine tune the newly-written capture code
-      - [ ] Reduce processing time for a single keyboard event; Else we lose typing data
+      - [ ] Reduce processing time for a single keyboard event; Else we lose keystroke timing data
       - [ ] Stop program for aprox. 2s when typing for a section is done and prompt for him/her to write another sentence
     - [ ] Tidy up the capture code
     - [ ] Write unit tests
