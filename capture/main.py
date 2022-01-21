@@ -6,23 +6,22 @@ import keyboard as kb
 import numpy as np
 import pandas as pd
 
-import conf
+from conf import ConfManager
 
 event_list = []
 sequence_list = []
 no_up_events = 0
 
-conf_data = conf.get_conf_data()
-max_seq_len = conf_data['MAX_SEQUENCE_LENGTH']  # Used to eliminate the need of searching 'conf_data' dict in callback
+participant_name = input("[!] Please provide your name: ")
+conf_manager = ConfManager(participant_name=participant_name)
+max_seq_len = conf_manager.get_max_len()  # Used to eliminate the need to call ConfManager methods in callback
 
 def event_list_to_df(event_pairs: List[Tuple[float, float, str]], section_id: int) -> pd.DataFrame | None:
     """
-    TODO: Redo this function last, entirely
+    TODO: Test and tune this function
     :return:
     """
-    import conf
-
-    current_conf_data = conf.get_conf_data()
+    global conf_manager
     press_times, release_times, letters = [], [], []
 
     for pair in event_pairs:
@@ -32,9 +31,9 @@ def event_list_to_df(event_pairs: List[Tuple[float, float, str]], section_id: in
 
     df = pd.DataFrame()
 
-    participant_id_col = pd.Series(current_conf_data['PARTICIPANT_ID'] * len(press_times), dtype=np.int32)
+    participant_id_col = pd.Series([conf_manager.get_participant_id()] * len(press_times), dtype=np.int32)
     df['PARTICIPANT_ID'] = participant_id_col
-    test_section_id_col = pd.Series(section_id * len(press_times), dtype=np.int32)
+    test_section_id_col = pd.Series([section_id] * len(press_times), dtype=np.int32)
     df['TEST_SECTION_ID'] = test_section_id_col
     press_times_col = pd.Series(press_times, dtype=np.float64)
     df['PRESS_TIMES'] = press_times_col
@@ -44,17 +43,6 @@ def event_list_to_df(event_pairs: List[Tuple[float, float, str]], section_id: in
     df['LETTER'] = letters_col
 
     return df
-
-
-def write_keystroke_data():
-    """
-    :return: None
-    """
-
-    with open(conf.FILENAME, "w+") as file_handle:
-        df = event_list_to_df()
-        if df:
-            df.to_csv(file_handle, sep='\t', encoding='ISO-8859-1', line_terminator='\n', index=False)
 
 
 def handle_key_hold(kb_event: kb.KeyboardEvent) -> bool:
@@ -97,7 +85,7 @@ def process_sequence_events():
     global sequence_list
 
     sequence_timestamp_pairs = []
-    sequence_timestamp_pairs_list = [[]]
+    sequence_timestamp_pairs_list = []
 
     for sequence in sequence_list:
         # Pair events together
@@ -114,26 +102,29 @@ def process_sequence_events():
         sequence_timestamp_pairs = sorted(sequence_timestamp_pairs, key=lambda x: x[0], reverse=False)  # Sort sequence pairs by KEYDOWN timestamps to ensure they are ordered correctly
         sequence_timestamp_pairs_list.append(sequence_timestamp_pairs)  # Save list of pair timestamps for current sequence
 
+        sequence_timestamp_pairs = []
+
     return sequence_timestamp_pairs_list
 
 
 def main():
     from keyboard import hook, wait, unhook_all
 
+    global conf_manager
     global event_list
     global sequence_list
     global no_up_events
-    # TODO: Test this shit cuz it's late and I ain't feeling like it right now
-    conf.update_participant_id()  # Increment participant ID in conf file
+
+    conf_manager.update_participant_id()  # Increment participant ID in conf file
 
     print("[INFO] Capturing keystroke data...")
-    for i in range(conf_data['NUM_SECTIONS_TO_CAPTURE']):
-        print(f"[INFO] Capturing data for sequence #{i}")
+    for i in range(conf_manager.get_no_sequences()):
+        print(f"[INFO] Capturing data for sequence #{i}.")
         hook(keypress_callback)
         wait('esc')
         unhook_all()
 
-        no_up_events = 0  # Reset counter for KEYUP events to suppress message in callback on 2nd+ iterations
+        no_up_events = 0  # Reset counter for KEYUP events to maintain logic in callback on 2nd+ iterations
         sequence_list.append(event_list)  # Save list of events for later processing
         event_list = []  # Empty the list of events, to be populated in the next sequence
 
@@ -143,9 +134,15 @@ def main():
         dfs.append(event_list_to_df(pairs, pair_index + 1))
 
     final_df = pd.concat(dfs, axis='rows')
-    print("DONE")
+    with open(conf_manager.get_filename(), "w+") as fh:
+        final_df.to_csv(fh, sep='\t', encoding='ISO-8859-1', line_terminator='\n', index=False)
+
+    print("[INFO] Finished processing user data.")
+
+    # TODO: Debug & find out why conf.json is not updated on program exit, when the
+    #       ConfManager instance is destroyed (is ConfManager.__del__() even called?)
 
 
 if __name__ == "__main__":
     main()
-
+    # TODO: Maybe I should get an instance of ConfManager here?
