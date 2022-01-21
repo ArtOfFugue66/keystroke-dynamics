@@ -11,10 +11,10 @@ class ConfManager:
             with open(CONF_FILENAME, 'r') as fh:
                 data = json.load(fh)
 
-            self.participant_id = data['PARTICIPANT_ID']
+            self.participant_id = int(data['PARTICIPANT_ID'])
             self.file_ext = data['FILE_EXT']
-            self.num_sequences_to_capture = data['NUM_SEQUENCES_TO_CAPTURE']
-            self.max_sequence_len = data['MAX_SEQUENCE_LENGTH']
+            self.num_sequences_to_capture = int(data['NUM_SEQUENCES_TO_CAPTURE'])
+            self.max_sequence_len = int(data['MAX_SEQUENCE_LENGTH'])
 
             fh.close()
         else:
