@@ -139,10 +139,8 @@ def main():
 
     print("[INFO] Finished processing user data.")
 
-    # TODO: Debug & find out why conf.json is not updated on program exit, when the
-    #       ConfManager instance is destroyed (is ConfManager.__del__() even called?)
+    del conf_manager  # Explicitly invoke destructor of ConfManager class
 
 
 if __name__ == "__main__":
     main()
-    # TODO: Maybe I should get an instance of ConfManager here?
